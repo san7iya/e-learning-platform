@@ -5,9 +5,9 @@
   width: 100%;
   padding: 1rem 4rem;
   box-sizing: border-box;
-  background-color: transparent; /* shows your purple background */
+  background-color: transparent; 
   color: white;
-  position: absolute; /* keeps it above background */
+  position: absolute; 
   top: 0;
   left: 0;
 }

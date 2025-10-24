@@ -1,5 +1,5 @@
 import React from "react";
-import polygon2 from "./Polygon 2.svg"; // make sure this file exists
+import polygon2 from "./Polygon 2.svg"; 
 import "./style.css";
 import { useNavigate } from "react-router-dom";
 

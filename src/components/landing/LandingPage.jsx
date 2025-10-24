@@ -1,6 +1,6 @@
 import React from "react";
 import "./LandingPage.css";
-import { Frame } from "../header/Header"; // import header
+import { Frame } from "../header/Header"; 
 
 export function LandingPage() {
   return (
