@@ -1,0 +1,94 @@
+.dashboard {
+  background: #b6baf6;
+  padding: clamp(20px, 3.5vw, 48px);
+  padding-top: 48px; /* more top padding */
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: clamp(24px, 3vw, 36px);
+  margin-top: 20px;
+  color: #333;
+}
+
+.header h1 {
+  font-size: clamp(1.2rem, 2.8vw, 1.8rem);
+  line-height: 1.15;
+  font-weight: 600;
+}
+
+/* content container to align header and cards */
+.content {
+  max-width: 1400px; /* increased to accommodate 4 cards */
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Layout: ensure cards vertically center between header and pagination */
+.content {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 100px);
+  justify-content: flex-start; /* align content to top */
+}
+
+.header h1 {
+  flex: 1 1 auto;
+  margin: 0;
+  margin-right: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history {
+  color: #6c3ba1; /* changed color */
+  font-weight: 700; /* bold */
+  cursor: default;
+}
+
+.cards-wrapper {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* exactly 4 columns */
+  gap: clamp(16px, 2vw, 24px);
+  align-items: start;
+  width: 100%;
+  margin: 0; /* remove auto margins */
+}
+
+.pagination {
+  margin-top: 24px;
+  margin-bottom: 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.pagination button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #6c3ba1;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(108, 59, 161, 0.1);
+}
+
+.pagination button:hover {
+  background: #6c3ba1;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 59, 161, 0.2);
+}

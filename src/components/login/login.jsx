@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./style.css";
 import { Frame } from "./Frame";
+import { useNavigate } from "react-router-dom";
 
 export const Login = ({ initialMode = "login" }) => {
   const [mode, setMode] = useState(initialMode);
@@ -8,6 +9,7 @@ export const Login = ({ initialMode = "login" }) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -17,8 +19,12 @@ export const Login = ({ initialMode = "login" }) => {
         return;
       }
       alert(`Registered: ${username}`);
+      navigate("/dashboard");
+      localStorage.setItem("username", username);
     } else {
       alert(`Username: ${username}\nPassword: ${password}\nRemember Me: ${rememberMe}`);
+      navigate("/dashboard");
+      localStorage.setItem("username", username);
     }
   };
 
@@ -95,17 +101,21 @@ export const Login = ({ initialMode = "login" }) => {
           </div>
 
           {/* Checkbox & Forgot Password */}
-          <div className="frame-9">
-            <label>
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={() => setRememberMe(!rememberMe)}
-              />{" "}
-              Remember me
-            </label>
-            <div className="text-wrapper-11">Forgot Password ?</div>
-          </div>
+          {
+            mode === "login" && (
+                <div className="forgot-pw">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={() => setRememberMe(!rememberMe)}
+                  />{" "}
+                  Remember me
+                </label>
+                <div className="text-wrapper-11">Forgot Password ?</div>
+              </div>
+            )
+          }
 
           {/* Submit Button */}
           <button type="submit" className="div-wrapper">

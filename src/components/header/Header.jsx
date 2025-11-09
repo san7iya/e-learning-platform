@@ -3,7 +3,9 @@ import polygon2 from "./Polygon 2.svg";
 import "./style.css";
 import { useNavigate } from "react-router-dom";
 
-export const Frame = () => {
+export const Header = () => {
+  const navigate = useNavigate();
+
   return (
     <header className="frame">
       <div className="logo-section">
@@ -14,7 +16,6 @@ export const Frame = () => {
       <nav className="navbar">
         <div>Home</div>
         <div>Courses</div>
-        <div>About Us</div>
       </nav>
 
       <div className="auth-buttons">

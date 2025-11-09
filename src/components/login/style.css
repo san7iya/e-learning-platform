@@ -156,7 +156,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 15px;/
+  margin-bottom: 15px;
 }
 
 .frame-5 input[type="text"],
@@ -173,16 +173,16 @@
 }
 
 /* Checkbox and Forgot Password */
-.frame-9 {
+.forgot-pw {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   font-family: "Poppins-Regular", Helvetica;
-  font-size: 12px;
+  font-size: 16px;
 }
 
-.frame-9 input[type="checkbox"] {
+.forget-pw input[type="checkbox"] {
   margin-right: 5px;
 }
 
