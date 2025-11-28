@@ -1,11 +1,24 @@
 import React from "react";
+import Header from "./headerLanding";
+import HeroSection from "./hero";
+import CoursesSection from "./coursessection";
+import TestimonialsSection from "./testimonials";
+import Footer from "./footer";
 import "./LandingPage.css";
-import { Header } from "../header/Header"; 
 
-export function LandingPage() {
+export default function LandingPage() {
+  const handleNavigate = (path) => {
+    // Add your navigation logic here
+    console.log('Navigating to:', path);
+  };
+
   return (
     <div className="landing-page">
-      <Header /> {/* adds header */}
+      <Header onNavigate={handleNavigate} />
+      <HeroSection />
+      <CoursesSection />
+      <TestimonialsSection />
+      <Footer />
     </div>
   );
 }

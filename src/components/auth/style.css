@@ -216,3 +216,16 @@
   margin: 0;
   line-height: 1;
 }
+
+/* Fix Email input styling */
+.frame-5 input[type="email"] {
+  width: 100%;
+  height: 54px;
+  border-radius: 40px;
+  border: 1px solid #7272b8;
+  padding-left: 30px;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: "Poppins-Regular", Helvetica;
+}

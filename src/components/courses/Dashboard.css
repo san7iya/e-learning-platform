@@ -1,78 +1,81 @@
+/* Main dashboard section */
 .dashboard {
   background: #b6baf6;
   padding: clamp(20px, 3.5vw, 48px);
-  padding-top: 48px; /* more top padding */
-  min-height: 100vh;
+  padding-top: 48px;
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+  margin-bottom: 80px; /* space before next sections */
 }
 
+/* Content wrapper */
+.content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/******** HEADER ********/
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: clamp(24px, 3vw, 36px);
-  margin-top: 20px;
   color: #333;
 }
 
 .header h1 {
-  font-size: clamp(1.2rem, 2.8vw, 1.8rem);
-  line-height: 1.15;
+  font-size: clamp(1.3rem, 2.2vw, 2rem);
   font-weight: 600;
-}
-
-/* content container to align header and cards */
-.content {
-  max-width: 1400px; /* increased to accommodate 4 cards */
-  margin: 0 auto;
-  padding: 0 16px;
-}
-
-/* Layout: ensure cards vertically center between header and pagination */
-.content {
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - 100px);
-  justify-content: flex-start; /* align content to top */
-}
-
-.header h1 {
-  flex: 1 1 auto;
-  margin: 0;
-  margin-right: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .history {
-  color: #6c3ba1; /* changed color */
-  font-weight: 700; /* bold */
-  cursor: default;
+  color: #6c3ba1;
+  font-weight: 700;
+  cursor: pointer;
 }
 
+.history:hover {
+  opacity: 0.8;
+}
+
+/******** DASHBOARD CARDS ********/
 .cards-wrapper {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* exactly 4 columns */
-  gap: clamp(16px, 2vw, 24px);
-  align-items: start;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(16px, 1.6vw, 24px);
   width: 100%;
-  margin: 0; /* remove auto margins */
 }
 
+@media (max-width: 1024px) {
+  .cards-wrapper {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .cards-wrapper {
+    grid-template-columns: 1fr;
+  }
+}
+
+/******** PAGINATION ********/
 .pagination {
-  margin-top: 24px;
-  margin-bottom: 0;
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .pagination button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
   background: #ffffff;
@@ -82,13 +85,39 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 8px rgba(108, 59, 161, 0.12);
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(108, 59, 161, 0.1);
 }
 
 .pagination button:hover {
   background: #6c3ba1;
   color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(108, 59, 161, 0.2);
+  box-shadow: 0 4px 12px rgba(108, 59, 161, 0.25);
+}
+
+/******** CATEGORY SECTION ********/
+.bg-white {
+  background: white;
+}
+
+Category Section Title
+section h2 {
+  font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+  font-weight: 600;
+}
+
+/******** RECOMMENDED ********/
+.bg-gray-50 {
+  background: #f8f8fc;
+}
+
+/******** FOOTER ********/
+footer {
+  background: #C5C9F0;
+}
+
+/******** SMOOTH SCROLL ********/
+html {
+  scroll-behavior: smooth;
 }
