@@ -143,23 +143,9 @@ Default frontend URL: `http://localhost:5173`
 
 ---
 
-## Author
-
-Saniya Goyal
-
-23BCE2126 – DBMS Project
-
-Vellore Institute of Technology
-
----
-
 ## Contributing
 
 Star the repo and feel free to contribute via issues or pull requests. Add a brief description of changes and include any migration or setup steps in your PR.
-
-## License
-
-Add your license of choice here (e.g., MIT) or remove this section if you prefer a different license.
 
 ---
 
