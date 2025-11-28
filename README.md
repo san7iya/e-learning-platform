@@ -1,178 +1,166 @@
-📘 E-Learning Platform (React + Node.js + PostgreSQL)
+# E-Learning Platform
 
-A full-stack E-Learning Platform inspired by Coursera.
-Users can register, log in, browse courses, and access a personalized dashboard with progress tracking — all powered through a PostgreSQL backend.
+> Full‑stack E‑Learning Platform (React + Vite frontend, Node.js + Express backend, PostgreSQL)
 
-🚀 Features
-🔐 Authentication
+A Coursera‑inspired project where users can register, log in, browse courses, and access a personalized dashboard with progress tracking.
 
-Register & Login with email + password
+---
 
-Passwords securely hashed using bcrypt
+## Features
 
-User stored in localStorage for session persistence
+- **Authentication:** Register & login with email/password, passwords hashed with `bcrypt`, session persisted in `localStorage`.
+- **Course Management:** Courses fetched from PostgreSQL; instructor and duration displayed; shown on the Landing Page and Dashboard.
+- **User Dashboard:** Personalized welcome message, in‑progress courses, recommended courses, category cards.
+- **Responsive Frontend:** Built with React + Vite and a modern component structure.
+- **Backend API:** Express REST API, PostgreSQL (`pg`), CORS enabled, auth and course routes.
 
-🎓 Course Management
+---
 
-Fetch courses dynamically from PostgreSQL
+## Project Structure
 
-Instructor + Duration displayed
-
-Courses shown on Landing Page and Dashboard
-
-📊 User Dashboard
-
-Personalized welcome message
-
-In-progress courses section
-
-Recommended courses
-
-Course category cards
-
-🎨 UI / Frontend
-
-React.js + Vite
-
-Fully responsive
-
-Modern components (Course Cards, Header, Dashboard layout)
-
-🗄️ Backend
-
-Express.js API
-
-PostgreSQL connection using pg
-
-CORS enabled
-
-REST API for courses + authentication
-
-📁 Project Structure
+```
 e-learning-platform/
 │
 ├── backend/
-│   ├── index.js           # API routes + DB connection
+│   ├── index.js          # API routes + DB connection
 │   ├── package.json
-|   ├── package-lock.json 
 │   └── node_modules/
 │
 ├── src/
 │   ├── App.jsx
-│   ├── components/
-│   │   ├── landing/
-│   │   ├── login/
-│   │   ├── header/
-│   │   ├── courses/
-│   │   └── common/
+│   ├── main.jsx
 │   ├── index.css
-│   └── main.jsx
+│   └── components/
+│       ├── landing/
+│       ├── login/
+│       ├── header/
+│       ├── courses/
+│       └── common/
 │
-|
 ├── package.json
-├── package-lock.json
 └── README.md
+```
 
-🛢️ Database Schema (PostgreSQL)
-users
-user_id SERIAL PRIMARY KEY
-name VARCHAR(100)
-email VARCHAR(100) UNIQUE
-password TEXT
-join_date TIMESTAMP
+---
 
-course
-course_id SERIAL PRIMARY KEY
-title VARCHAR(255)
-description TEXT
-duration_weeks INT
-instructor_id INT REFERENCES instructor(instructor_id)
+## Database Schema (PostgreSQL)
 
-instructor
-instructor_id SERIAL PRIMARY KEY
-name VARCHAR(100)
-bio TEXT
-org_id INT REFERENCES organization(org_id)
+### users
+- `user_id` SERIAL PRIMARY KEY
+- `name` VARCHAR(100)
+- `email` VARCHAR(100) UNIQUE
+- `password` TEXT
+- `join_date` TIMESTAMP
 
-organization
-org_id SERIAL PRIMARY KEY
-name VARCHAR(100)
-location VARCHAR(255)
+### course
+- `course_id` SERIAL PRIMARY KEY
+- `title` VARCHAR(255)
+- `description` TEXT
+- `duration_weeks` INT
+- `instructor_id` REFERENCES `instructor`
 
-module
-module_id SERIAL PRIMARY KEY
-course_id INT REFERENCES course(course_id)
-title VARCHAR(255)
-duration_minutes INT
+### instructor
+- `instructor_id` SERIAL PRIMARY KEY
+- `name` VARCHAR(100)
+- `bio` TEXT
+- `org_id` REFERENCES `organization`
 
-enrollment
-enrollment_id SERIAL PRIMARY KEY
-user_id INT REFERENCES users(user_id)
-course_id INT REFERENCES course(course_id)
-enrollment_date TIMESTAMP
-progress_percent INT
+### organization
+- `org_id` SERIAL PRIMARY KEY
+- `name` VARCHAR(100)
+- `location` VARCHAR(255)
 
-🔗 Backend API Endpoints
-🔐 Authentication
-Method	Route	Description
-POST	/register	Register new user
-POST	/login	Login existing user
-📚 Course APIs
-Method	Route	Description
-GET	/courses	Fetch all courses
-POST	/add-course	Add test course (dev only)
-🖥️ Backend Setup
-Install dependencies
+### module
+- `module_id` SERIAL PRIMARY KEY
+- `course_id` REFERENCES `course`
+- `title` VARCHAR(255)
+- `duration_minutes` INT
+
+### enrollment
+- `enrollment_id` SERIAL PRIMARY KEY
+- `user_id` REFERENCES `users`
+- `course_id` REFERENCES `course`
+- `enrollment_date` TIMESTAMP
+- `progress_percent` INT
+
+---
+
+## Backend API Endpoints
+
+### Authentication
+- `POST /register` — Register new user
+- `POST /login` — Login existing user
+
+### Courses
+- `GET /courses` — Fetch all courses
+- `POST /add-course` — Add test course (dev only)
+
+---
+
+## Backend Setup
+
+Open a terminal, change into the `backend` folder, install dependencies and start the server:
+
+```powershell
 cd backend
 npm install
-
-Run backend
 node index.js
+```
 
+By default the backend runs at: `http://localhost:5000`
 
-Backend runs on:
-👉 http://localhost:5000
+---
 
-🌐 Frontend Setup
-Install dependencies
+## Frontend Setup
+
+From the repository root install dependencies and start the Vite dev server:
+
+```powershell
 npm install
-
-Run frontend
 npm run dev
+```
 
+Default frontend URL: `http://localhost:5173`
 
-Frontend runs on:
-👉 http://localhost:5173
+---
 
-🔐 Authentication Flow (Simplified)
+## Authentication Flow (Simplified)
 
-User registers → password hashed via bcrypt
+1. User registers → password hashed using `bcrypt`.
+2. Login → `bcrypt.compare()` validates password.
+3. On success → user object saved to `localStorage`.
+4. Dashboard checks `localStorage` for authenticated user; otherwise redirects to login.
 
-Login → bcrypt.compare() checks password
+---
 
-On success → user stored in localStorage
+## Tech Stack
 
-Dashboard checks for localStorage user → else redirect to login
+- **Frontend:** React.js, Vite
+- **Backend:** Node.js, Express.js
+- **Database:** PostgreSQL
+- **Auth:** bcrypt
+- **API:** REST
 
-📸 Screenshots (Optional for GitHub)
+---
 
-You can add images later like this:
-
-![Alt Text](./screenshots/login.png)
-
-🛠️ Tech Stack
-Layer	Technology
-Frontend	React.js, Vite, CSS
-Backend	Node.js, Express.js
-Database	PostgreSQL
-Auth	bcrypt
-API	REST
-🧑‍💻 Author
+## Author
 
 Saniya Goyal
+
 23BCE2126 – DBMS Project
+
 Vellore Institute of Technology
 
-⭐ If you like this project
+---
 
-Feel free to star ⭐ the repository and contribute!
+## Contributing
+
+Star the repo and feel free to contribute via issues or pull requests. Add a brief description of changes and include any migration or setup steps in your PR.
+
+## License
+
+Add your license of choice here (e.g., MIT) or remove this section if you prefer a different license.
+
+---
+
+Thank you for checking out the project — happy coding!
