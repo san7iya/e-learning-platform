@@ -11,12 +11,12 @@ INSERT INTO instructor (name, bio, org_id) VALUES
   ('Priya Nair', 'UX designer and instructor specializing in product design.', 2)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO course (title, description, duration_weeks, instructor_id) VALUES
-  ('Full-Stack Web Development', 'Build and deploy full-stack apps with React, Node.js, and PostgreSQL.', 10, 1),
-  ('Introduction to Machine Learning', 'Core ML concepts, from linear regression to neural networks.', 8, 2),
-  ('UI/UX Design Fundamentals', 'Learn user-centered design, wireframing, and prototyping.', 6, 3),
-  ('Advanced JavaScript', 'Deep dive into closures, async patterns, and the JS event loop.', 5, 1),
-  ('Data Analysis with Python', 'Pandas, NumPy, and data visualization for real-world datasets.', 7, 2)
+INSERT INTO course (title, description, duration_weeks, instructor_id, category) VALUES
+  ('Full-Stack Web Development', 'Build and deploy full-stack apps with React, Node.js, and PostgreSQL.', 10, 1, 'Development'),
+  ('Introduction to Machine Learning', 'Core ML concepts, from linear regression to neural networks.', 8, 2, 'Data'),
+  ('UI/UX Design Fundamentals', 'Learn user-centered design, wireframing, and prototyping.', 6, 3, 'Design'),
+  ('Advanced JavaScript', 'Deep dive into closures, async patterns, and the JS event loop.', 5, 1, 'Development'),
+  ('Data Analysis with Python', 'Pandas, NumPy, and data visualization for real-world datasets.', 7, 2, 'Data')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO module (course_id, title, duration_minutes) VALUES

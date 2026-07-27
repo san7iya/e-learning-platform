@@ -8,7 +8,9 @@ export default function CourseCard({
   progress,
   lessonsDone,
   totalLessons,
-  category
+  category,
+  onEnroll,
+  enrolled
 }) {
   return (
     <div className="course-card">
@@ -27,7 +29,13 @@ export default function CourseCard({
         <div className="progress-bar" style={{ width: `${progress}%` }}></div>
       </div>
 
-      <span className="lesson-count">Lesson {lessonsDone || 5} of {totalLessons || 7}</span>
+      <span className="lesson-count">Lesson {lessonsDone} of {totalLessons}</span>
+
+      {onEnroll && (
+        <button className="enroll-btn" onClick={onEnroll} disabled={enrolled}>
+          {enrolled ? "Enrolled" : "Enroll"}
+        </button>
+      )}
     </div>
   );
 }

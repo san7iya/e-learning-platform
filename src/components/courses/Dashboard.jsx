@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import Header from "../header/Header";
 import { Pencil, Monitor, Receipt, Briefcase } from "lucide-react";
 import courseThumbnail from "./coursecard_photo.svg";
@@ -6,25 +7,47 @@ import { API_BASE } from "../../config";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const navigate = useNavigate();
   const [inProgressCourses, setInProgressCourses] = useState([]);
+  const [recommendedCourses, setRecommendedCourses] = useState([]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/courses`)
+    fetch(`${API_BASE}/my-courses`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
           const formatted = data.courses.map(c => ({
             title: c.title,
             author: c.instructor,
-            progress: 60,
-            category: "General"
+            progress: c.progress_percent,
+            category: c.category || "Uncategorized"
           }));
           setInProgressCourses(formatted);
         }
       })
       .catch(err => console.log("Fetch error:", err));
-  }, []);
+  }, [token]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/recommended-courses`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const formatted = data.courses.map(c => ({
+            title: c.title,
+            author: c.instructor,
+            category: c.category || "Uncategorized"
+          }));
+          setRecommendedCourses(formatted);
+        }
+      })
+      .catch(err => console.log("Fetch error:", err));
+  }, [token]);
 
   const username = user?.name || "User";
 
@@ -33,13 +56,6 @@ export default function Dashboard() {
     { icon: Monitor, title: "Development", color: "#818cf8" },
     { icon: Receipt, title: "Finance", color: "#60a5fa" },
     { icon: Briefcase, title: "Business", color: "#14b8a6" }
-  ];
-
-  const recommendedCourses = [
-    { title: "AWS Certified Solutions Architect", author: "Lina", price: "$80", oldPrice: "$100", category: "Cloud" },
-    { title: "React Mastery Bootcamp", author: "Max", price: "$60", oldPrice: "$90", category: "Development" },
-    { title: "Data Science for Beginners", author: "Sarah", price: "$75", oldPrice: "$110", category: "Data" },
-    { title: "UI/UX Design Masterclass", author: "Julia", price: "$50", oldPrice: "$85", category: "Design" }
   ];
 
   const Card = ({ title, author, progress, price, oldPrice, category }) => (
@@ -122,11 +138,15 @@ export default function Dashboard() {
             <span style={{ fontWeight: "700", color: "#6c3ba1", cursor: "pointer" }}>View history</span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px" }}>
-            {inProgressCourses.map((c, i) => (
-              <Card key={i} {...c} />
-            ))}
-          </div>
+          {inProgressCourses.length > 0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px" }}>
+              {inProgressCourses.map((c, i) => (
+                <Card key={i} {...c} />
+              ))}
+            </div>
+          ) : (
+            <p>You haven't enrolled in any courses yet — browse courses to get started.</p>
+          )}
         </div>
       </div>
 
@@ -140,11 +160,13 @@ export default function Dashboard() {
             {categories.map((cat, i) => (
               <div
                 key={i}
+                onClick={() => navigate(`/courses?category=${encodeURIComponent(cat.title)}`)}
                 style={{
                   background: "#fff",
                   borderRadius: "12px",
                   padding: "24px",
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.06)"
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.06)",
+                  cursor: "pointer"
                 }}
               >
                 <div

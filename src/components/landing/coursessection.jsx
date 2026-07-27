@@ -32,8 +32,8 @@ export default function CoursesSection() {
             author: c.instructor || "Unknown",
             progress: 0,
             lessonsDone: 0,
-            totalLessons: 0,
-            category: "General"
+            totalLessons: c.lessons_count,
+            category: c.category || "Uncategorized"
           }));
           setCourses(formatted);
         }

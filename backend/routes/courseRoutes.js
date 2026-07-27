@@ -1,5 +1,5 @@
 const express = require("express");
-const { getCourses, createCourse, updateCourse } = require("../controllers/courseController");
+const { getCourses, getRecommendedCourses, createCourse, updateCourse } = require("../controllers/courseController");
 const { requireAuth } = require("../middleware/auth");
 const { requireRole, requireOwnership } = require("../middleware/rbac");
 const courseService = require("../services/courseService");
@@ -7,6 +7,7 @@ const courseService = require("../services/courseService");
 const router = express.Router();
 
 router.get("/courses", getCourses);
+router.get("/recommended-courses", requireAuth, getRecommendedCourses);
 
 router.post(
   "/courses",

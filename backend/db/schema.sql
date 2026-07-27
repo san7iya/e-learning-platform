@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS course (
   title           VARCHAR(255),
   description     TEXT,
   duration_weeks  INT,
-  instructor_id   INT REFERENCES instructor(instructor_id)
+  instructor_id   INT REFERENCES instructor(instructor_id),
+  category        VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS module (
@@ -44,5 +45,9 @@ CREATE TABLE IF NOT EXISTS enrollment (
   user_id           INT REFERENCES users(user_id),
   course_id         INT REFERENCES course(course_id),
   enrollment_date   TIMESTAMP,
-  progress_percent  INT
+  progress_percent  INT,
+  UNIQUE (user_id, course_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_course_category ON course(category);
+CREATE INDEX IF NOT EXISTS idx_course_instructor_id ON course(instructor_id);

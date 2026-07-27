@@ -3,7 +3,24 @@ const { handleServerError } = require("../utils/errors");
 
 async function getCourses(req, res) {
   try {
-    const courses = await courseService.getAllCourses();
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 10));
+
+    const { courses, total } = await courseService.getAllCourses(req.query.category, { page, limit });
+
+    res.json({
+      success: true,
+      courses,
+      pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) }
+    });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+}
+
+async function getRecommendedCourses(req, res) {
+  try {
+    const courses = await courseService.getRecommendedCourses(req.user.user_id);
     res.json({ success: true, courses });
   } catch (err) {
     handleServerError(res, err);
@@ -11,7 +28,7 @@ async function getCourses(req, res) {
 }
 
 async function createCourse(req, res) {
-  const { title, description, duration_weeks } = req.body;
+  const { title, description, duration_weeks, category } = req.body;
 
   if (!title) {
     return res.status(400).json({ success: false, message: "Title is required" });
@@ -23,7 +40,8 @@ async function createCourse(req, res) {
       title,
       description,
       durationWeeks: duration_weeks,
-      instructorId
+      instructorId,
+      category
     });
     res.status(201).json({ success: true, course });
   } catch (err) {
@@ -32,13 +50,14 @@ async function createCourse(req, res) {
 }
 
 async function updateCourse(req, res) {
-  const { title, description, duration_weeks } = req.body;
+  const { title, description, duration_weeks, category } = req.body;
 
   try {
     const course = await courseService.updateCourse(req.params.id, {
       title,
       description,
-      durationWeeks: duration_weeks
+      durationWeeks: duration_weeks,
+      category
     });
 
     if (!course) {
@@ -51,4 +70,4 @@ async function updateCourse(req, res) {
   }
 }
 
-module.exports = { getCourses, createCourse, updateCourse };
+module.exports = { getCourses, getRecommendedCourses, createCourse, updateCourse };

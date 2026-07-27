@@ -75,3 +75,25 @@ h3 {
   margin-top: 2px;
 }
 
+.enroll-btn {
+  background-color: #6c3ba1;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+  margin-top: 4px;
+}
+
+.enroll-btn:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.enroll-btn:disabled {
+  background-color: #a3a3a3;
+  cursor: default;
+}
+
