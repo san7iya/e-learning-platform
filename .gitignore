@@ -6,3 +6,4 @@ dist/
 /.idea
 *.log
 .claude/
+GAPS_CHECKLIST.md

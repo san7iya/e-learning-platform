@@ -5,7 +5,9 @@ CREATE TABLE IF NOT EXISTS users (
   name       VARCHAR(100),
   email      VARCHAR(100) UNIQUE,
   password   TEXT,
-  join_date  TIMESTAMP
+  join_date  TIMESTAMP,
+  role       VARCHAR(20) NOT NULL DEFAULT 'student'
+             CHECK (role IN ('student', 'instructor', 'org-admin'))
 );
 
 CREATE TABLE IF NOT EXISTS organization (
@@ -18,7 +20,8 @@ CREATE TABLE IF NOT EXISTS instructor (
   instructor_id  SERIAL PRIMARY KEY,
   name           VARCHAR(100),
   bio            TEXT,
-  org_id         INT REFERENCES organization(org_id)
+  org_id         INT REFERENCES organization(org_id),
+  user_id        INT UNIQUE REFERENCES users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS course (

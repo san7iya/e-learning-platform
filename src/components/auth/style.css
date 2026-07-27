@@ -229,3 +229,17 @@
   box-sizing: border-box;
   font-family: "Poppins-Regular", Helvetica;
 }
+
+.frame-5 select {
+  width: 100%;
+  height: 54px;
+  border-radius: 40px;
+  border: 1px solid #7272b8;
+  padding-left: 30px;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: "Poppins-Regular", Helvetica;
+  background-color: #ffffff;
+  color: inherit;
+}

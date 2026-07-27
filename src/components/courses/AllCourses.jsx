@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import CourseCard from "./CourseCard";
-import Header from "../landing/headerLanding";
+import Header from "../header/Header";
 import Footer from "../landing/footer";
 import { API_BASE } from "../../config";
 

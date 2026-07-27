@@ -1,30 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from "../header/Header";
+import Header from "../header/Header";
 import { Pencil, Monitor, Receipt, Briefcase } from "lucide-react";
 import courseThumbnail from "./coursecard_photo.svg";
 import { API_BASE } from "../../config";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [inProgressCourses, setInProgressCourses] = useState([]);
-  const [loadingUser, setLoadingUser] = useState(true);
-
-  useEffect(() => {
-    try {
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-
-      if (!storedUser) {
-        window.location.href = "/login"; // redirect if not logged in
-      } else {
-        setUser(storedUser);
-      }
-    } catch (error) {
-      console.log("Invalid localStorage user");
-      window.location.href = "/login";
-    }
-
-    setLoadingUser(false);
-  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/courses`)
@@ -43,11 +26,7 @@ export default function Dashboard() {
       .catch(err => console.log("Fetch error:", err));
   }, []);
 
-  if (loadingUser || !user) {
-    return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
-  }
-
-  const username = user.name || "User";
+  const username = user?.name || "User";
 
   const categories = [
     { icon: Pencil, title: "Design", color: "#2dd4bf" },

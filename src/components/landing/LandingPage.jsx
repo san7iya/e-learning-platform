@@ -1,5 +1,5 @@
 import React from "react";
-import Header from "./headerLanding";
+import Header from "../header/Header";
 import HeroSection from "./hero";
 import CoursesSection from "./coursessection";
 import TestimonialsSection from "./testimonials";

@@ -3,6 +3,7 @@ import "./style.css";
 import { Frame } from "./Frame";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../../config";
+import { useAuth } from "../../context/AuthContext";
 
 export const Login = ({ initialMode = "login" }) => {
   const [mode, setMode] = useState(initialMode);
@@ -10,8 +11,10 @@ export const Login = ({ initialMode = "login" }) => {
   const [email, setEmail] = useState(""); // added email
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("student");
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
   e.preventDefault();
@@ -25,13 +28,13 @@ export const Login = ({ initialMode = "login" }) => {
     const response = await fetch(`${API_BASE}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: username, email, password })
+      body: JSON.stringify({ name: username, email, password, role })
     });
 
     const data = await response.json();
 
     if (data.success) {
-      localStorage.setItem("user", JSON.stringify(data.user));
+      login(data.user, data.token);
       navigate("/dashboard");
     } else {
       alert(data.message || "Registration failed");
@@ -46,7 +49,7 @@ export const Login = ({ initialMode = "login" }) => {
     const data = await response.json();
 
     if (data.success) {
-      localStorage.setItem("user", JSON.stringify(data.user));
+      login(data.user, data.token);
       navigate("/dashboard");
     } else {
       alert(data.message || "Login failed");
@@ -145,6 +148,14 @@ export const Login = ({ initialMode = "login" }) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
+              </div>
+
+              <div className="input-group">
+                <label>I am a</label>
+                <select value={role} onChange={(e) => setRole(e.target.value)}>
+                  <option value="student">Student</option>
+                  <option value="instructor">Instructor</option>
+                </select>
               </div>
             </div>
           )}

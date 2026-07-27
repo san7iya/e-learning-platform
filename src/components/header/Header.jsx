@@ -1,62 +1,48 @@
 import React from "react";
-import polygon2 from "./Polygon 2.svg"; 
+import { BookOpen } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import "./style.css";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
-export const Header = () => {
+export default function Header() {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem("user"));
-
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    logout();
     navigate("/login");
   };
 
   return (
     <header className="frame">
-      {/* Logo */}
-      <div className="logo-section" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
-        <img className="polygon" alt="Polygon" src={polygon2} />
+      <Link to="/" className="logo-section">
+        <div className="polygon">
+          <BookOpen size={24} />
+        </div>
         <div className="text-wrapper">Brainy</div>
-      </div>
+      </Link>
 
-      {/* Navbar */}
-      <nav className="navbar">
-        <div onClick={() => navigate("/")}>Home</div>
-        <div onClick={() => navigate("/courses")}>Courses</div> {/* ✅ FIXED */}
+      <nav className="nav-links">
+        <Link to="/" className="nav-item">Home</Link>
+        <Link to="/courses" className="nav-item">Courses</Link>
       </nav>
 
-      {/* If user not logged in → Login + Sign Up */}
       {!user && (
         <div className="auth-buttons">
-          <button className="login-btn" onClick={() => navigate("/login")}>
-            Login
-          </button>
-          <button className="signup-btn" onClick={() => navigate("/register")}>
-            Sign Up
-          </button>
+          <Link to="/login">
+            <button className="login-btn">Login</button>
+          </Link>
+          <Link to="/register">
+            <button className="signup-btn">Sign Up</button>
+          </Link>
         </div>
       )}
 
-      {/* If user is logged in → Logout */}
       {user && (
-        <button
-          className="logout-btn"
-          onClick={handleLogout}
-          style={{
-            background: "#6c3ba1",
-            color: "white",
-            border: "none",
-            padding: "8px 20px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "600",
-          }}
-        >
+        <button className="logout-btn" onClick={handleLogout}>
           Logout
         </button>
       )}
     </header>
   );
-};
+}
