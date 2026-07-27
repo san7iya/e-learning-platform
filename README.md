@@ -8,11 +8,11 @@ A Coursera‑inspired project where users can register, log in, browse courses, 
 
 ## Features
 
-- **Authentication:** Register & login with email/password, passwords hashed with `bcrypt`, session persisted in `localStorage`.
+- **Authentication:** Register & login with email/password, passwords hashed with `bcrypt`, session persisted in `localStorage`. Input validation and rate limiting on auth routes.
 - **Course Management:** Courses fetched from PostgreSQL; instructor and duration displayed; shown on the Landing Page and Dashboard.
 - **User Dashboard:** Personalized welcome message, in‑progress courses, recommended courses, category cards.
 - **Responsive Frontend:** Built with React + Vite and a modern component structure.
-- **Backend API:** Express REST API, PostgreSQL (`pg`), CORS enabled, auth and course routes.
+- **Backend API:** Express REST API split into routes/controllers/services layers, PostgreSQL (`pg`), CORS enabled, env-based config via `dotenv`.
 
 ---
 
@@ -22,20 +22,26 @@ A Coursera‑inspired project where users can register, log in, browse courses, 
 e-learning-platform/
 │
 ├── backend/
-│   ├── index.js          # API routes + DB connection
-│   ├── package.json
-│   └── node_modules/
+│   ├── index.js        # App setup, middleware, route mounting
+│   ├── routes/         # Express routers
+│   ├── controllers/    # Request/response handling, validation
+│   ├── services/       # DB access + business logic (incl. db.js pool)
+│   ├── middleware/     # Rate limiting, etc.
+│   ├── utils/          # Shared helpers (error handling, validation)
+│   ├── db/             # schema.sql + seed.sql for local setup
+│   ├── .env.example
+│   └── package.json
 │
 ├── src/
 │   ├── App.jsx
 │   ├── main.jsx
 │   ├── index.css
+│   ├── config.js       # API_BASE constant
 │   └── components/
 │       ├── landing/
-│       ├── login/
+│       ├── auth/
 │       ├── header/
-│       ├── courses/
-│       └── common/
+│       └── courses/
 │
 ├── package.json
 └── README.md
@@ -98,12 +104,18 @@ e-learning-platform/
 
 ## Backend Setup
 
-Open a terminal, change into the `backend` folder, install dependencies, configure your environment, and start the server:
+Open a terminal, change into the `backend` folder, install dependencies, configure your environment, create the database, and start the server:
 
 ```powershell
 cd backend
 npm install
 copy .env.example .env   # then fill in your local DB credentials
+
+# create the database and apply schema + sample data
+psql -U postgres -h localhost -c "CREATE DATABASE elearning;"
+psql -U postgres -h localhost -d elearning -f db/schema.sql
+psql -U postgres -h localhost -d elearning -f db/seed.sql
+
 node index.js
 ```
 
