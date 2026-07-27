@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "./style.css";
 import { Frame } from "./Frame";
 import { useNavigate } from "react-router-dom";
+import { API_BASE } from "../../config";
 
 export const Login = ({ initialMode = "login" }) => {
   const [mode, setMode] = useState(initialMode);
@@ -21,7 +22,7 @@ export const Login = ({ initialMode = "login" }) => {
       return;
     }
 
-    const response = await fetch("http://localhost:5000/register", {
+    const response = await fetch(`${API_BASE}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: username, email, password })
@@ -36,7 +37,7 @@ export const Login = ({ initialMode = "login" }) => {
       alert(data.message || "Registration failed");
     }
   } else {
-    const response = await fetch("http://localhost:5000/login", {
+    const response = await fetch(`${API_BASE}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })

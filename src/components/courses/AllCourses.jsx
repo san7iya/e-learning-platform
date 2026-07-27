@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import CourseCard from "./CourseCard";
 import Header from "../landing/headerLanding";
 import Footer from "../landing/footer";
+import { API_BASE } from "../../config";
 
 export default function AllCourses() {
   const [courses, setCourses] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/courses")
+    fetch(`${API_BASE}/courses`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {

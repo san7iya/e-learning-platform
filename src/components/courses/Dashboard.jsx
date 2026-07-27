@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Header } from "../header/Header";
 import { Pencil, Monitor, Receipt, Briefcase } from "lucide-react";
 import courseThumbnail from "./coursecard_photo.svg";
+import { API_BASE } from "../../config";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -26,7 +27,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/courses")
+    fetch(`${API_BASE}/courses`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {

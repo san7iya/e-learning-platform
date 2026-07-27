@@ -93,17 +93,17 @@ e-learning-platform/
 
 ### Courses
 - `GET /courses` — Fetch all courses
-- `POST /add-course` — Add test course (dev only)
 
 ---
 
 ## Backend Setup
 
-Open a terminal, change into the `backend` folder, install dependencies and start the server:
+Open a terminal, change into the `backend` folder, install dependencies, configure your environment, and start the server:
 
 ```powershell
 cd backend
 npm install
+copy .env.example .env   # then fill in your local DB credentials
 node index.js
 ```
 
@@ -140,6 +140,7 @@ Default frontend URL: `http://localhost:5173`
 - **Database:** PostgreSQL
 - **Auth:** bcrypt
 - **API:** REST
+
 
 ---
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from "react-router-dom";
-import CourseCard from './CourseCard';
+import CourseCard from '../courses/CourseCard';
+import { API_BASE } from '../../config';
 
 export default function CoursesSection() {
   const [courses, setCourses] = useState([]);
@@ -11,12 +12,12 @@ export default function CoursesSection() {
     if (didFetch.current) return;
     didFetch.current = true;
 
-    fetch("http://localhost:5000/courses", { cache: "no-store" }) // avoid 304 issues
+    fetch(`${API_BASE}/courses`, { cache: "no-store" }) // avoid 304 issues
       .then(async (res) => {
         // Handle 304 explicitly in dev
         if (res.status === 304) {
           // Try re-fetch with no-cache
-          return fetch("http://localhost:5000/courses", {
+          return fetch(`${API_BASE}/courses`, {
             cache: "no-store",
             headers: { "Cache-Control": "no-cache" }
           }).then(r => r.json());

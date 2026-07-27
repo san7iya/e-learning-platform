@@ -2,7 +2,7 @@ import React from 'react';
 import { BookOpen } from 'lucide-react';
 import { Link } from "react-router-dom";
 
-export default function Header({ onNavigate }) {
+export default function Header() {
   return (
     <header className="frame">
       <div className="logo-section">

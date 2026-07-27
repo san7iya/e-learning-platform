@@ -548,16 +548,7 @@ body {
 
 .footer-links li {
   margin-bottom: 0.5rem;
-}
-
-.footer-links a {
   color: rgba(255,255,255,0.8);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.footer-links a:hover {
-  color: white;
 }
 
 .footer-bottom {

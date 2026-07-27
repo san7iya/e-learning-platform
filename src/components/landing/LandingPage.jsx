@@ -7,14 +7,9 @@ import Footer from "./footer";
 import "./LandingPage.css";
 
 export default function LandingPage() {
-  const handleNavigate = (path) => {
-    // Add your navigation logic here
-    console.log('Navigating to:', path);
-  };
-
   return (
     <div className="landing-page">
-      <Header onNavigate={handleNavigate} />
+      <Header />
       <HeroSection />
       <CoursesSection />
       <TestimonialsSection />
