@@ -8,11 +8,14 @@ A Coursera‑inspired project where users can register, log in, browse courses, 
 
 ## Features
 
-- **Authentication:** Register & login with email/password, passwords hashed with `bcrypt`, session persisted in `localStorage`. Input validation and rate limiting on auth routes.
-- **Course Management:** Courses fetched from PostgreSQL; instructor and duration displayed; shown on the Landing Page and Dashboard.
-- **User Dashboard:** Personalized welcome message, in‑progress courses, recommended courses, category cards.
-- **Responsive Frontend:** Built with React + Vite and a modern component structure.
+- **Authentication:** Register & login with email/password, passwords hashed with `bcrypt`, JWT issued on login/register and sent as a `Bearer` token. Input validation and rate limiting on auth routes.
+- **RBAC:** Role-gated course create/edit (`student` / `instructor` / `org-admin`), with role and ownership checked as two separate, composable middleware steps.
+- **Course Management:** Courses fetched from PostgreSQL with real category and lesson (module) counts; paginated; filterable by category.
+- **Enrollment & Progress:** Real enrollment records tied to each user, with per-course progress tracking (no more hardcoded values).
+- **User Dashboard:** Personalized welcome message, real in‑progress courses, category-matched recommendations, clickable category filters.
+- **Responsive Frontend:** Built with React + Vite, a shared `AuthContext`, and a consolidated auth-aware header.
 - **Backend API:** Express REST API split into routes/controllers/services layers, PostgreSQL (`pg`), CORS enabled, env-based config via `dotenv`.
+- **Tests:** backend (`jest`+`supertest`) covers auth (register/login happy + failure paths) and an RBAC-denied case; frontend (`vitest`+React Testing Library) covers `CourseCard`, `AuthContext`, and `PrivateRoute`.
 
 ---
 
@@ -22,13 +25,15 @@ A Coursera‑inspired project where users can register, log in, browse courses, 
 e-learning-platform/
 │
 ├── backend/
-│   ├── index.js        # App setup, middleware, route mounting
-│   ├── routes/         # Express routers
-│   ├── controllers/    # Request/response handling, validation
-│   ├── services/       # DB access + business logic (incl. db.js pool)
-│   ├── middleware/     # Rate limiting, etc.
-│   ├── utils/          # Shared helpers (error handling, validation)
-│   ├── db/             # schema.sql + seed.sql for local setup
+│   ├── app.js           # Express app (exported, no listen()) — used by tests too
+│   ├── index.js         # Entry point: imports app.js, calls listen()
+│   ├── routes/          # Express routers
+│   ├── controllers/     # Request/response handling, validation
+│   ├── services/        # DB access + business logic (incl. db.js pool)
+│   ├── middleware/      # Auth (JWT), RBAC, rate limiting
+│   ├── utils/           # Shared helpers (error handling, validation, JWT)
+│   ├── db/              # schema.sql, seed.sql, migrations/
+│   ├── tests/           # jest + supertest
 │   ├── .env.example
 │   └── package.json
 │
@@ -36,13 +41,24 @@ e-learning-platform/
 │   ├── App.jsx
 │   ├── main.jsx
 │   ├── index.css
-│   ├── config.js       # API_BASE constant
+│   ├── config.js        # API_BASE constant
+│   ├── test/
+│   │   └── setup.js     # vitest + jest-dom setup
+│   ├── context/
+│   │   ├── AuthContext.jsx       # AuthProvider + useAuth()
+│   │   └── AuthContext.test.jsx
 │   └── components/
 │       ├── landing/
 │       ├── auth/
-│       ├── header/
-│       └── courses/
+│       ├── header/       # single shared, auth-aware Header
+│       ├── courses/
+│       │   ├── CourseCard.jsx
+│       │   └── CourseCard.test.jsx
+│       └── routing/
+│           ├── PrivateRoute.jsx
+│           └── PrivateRoute.test.jsx
 │
+├── vite.config.js       # @vitejs/plugin-react + vitest config
 ├── package.json
 └── README.md
 ```
@@ -57,6 +73,7 @@ e-learning-platform/
 - `email` VARCHAR(100) UNIQUE
 - `password` TEXT
 - `join_date` TIMESTAMP
+- `role` VARCHAR(20) DEFAULT `'student'` — `student` / `instructor` / `org-admin` (self-serve at registration; `org-admin` is not self-servable)
 
 ### course
 - `course_id` SERIAL PRIMARY KEY
@@ -64,12 +81,14 @@ e-learning-platform/
 - `description` TEXT
 - `duration_weeks` INT
 - `instructor_id` REFERENCES `instructor`
+- `category` VARCHAR(50) — indexed, filterable via `GET /courses?category=`
 
 ### instructor
 - `instructor_id` SERIAL PRIMARY KEY
 - `name` VARCHAR(100)
 - `bio` TEXT
 - `org_id` REFERENCES `organization`
+- `user_id` UNIQUE REFERENCES `users` — links an instructor row to the login-capable user who owns it, for RBAC ownership checks
 
 ### organization
 - `org_id` SERIAL PRIMARY KEY
@@ -88,17 +107,29 @@ e-learning-platform/
 - `course_id` REFERENCES `course`
 - `enrollment_date` TIMESTAMP
 - `progress_percent` INT
+- `UNIQUE (user_id, course_id)` — a user can only enroll in a given course once
 
 ---
 
 ## Backend API Endpoints
 
+All protected routes expect `Authorization: Bearer <token>`, where `<token>` is the JWT returned by `/register` or `/login`.
+
 ### Authentication
-- `POST /register` — Register new user
-- `POST /login` — Login existing user
+- `POST /register` — Register a new user. Body: `{ name, email, password, role? }` (`role` defaults to `student`; only `student`/`instructor` are self-servable). Returns `{ token, user }` — never the password hash.
+- `POST /login` — Login. Returns `{ token, user }`.
+- `GET /me` — *(auth required)* Returns the current user's fresh profile (name/email/role) for the given token.
 
 ### Courses
-- `GET /courses` — Fetch all courses
+- `GET /courses` — Public. Query params: `category` (filter), `page`, `limit` (pagination, default `limit=10`, max `50`). Returns `{ courses, pagination: { page, limit, total, totalPages } }`, each course including a real `lessons_count` (from `module`).
+- `GET /recommended-courses` — *(auth required)* Courses the user isn't enrolled in yet, prioritizing categories they're already enrolled in, capped at 4.
+- `POST /courses` — *(auth required, role: `instructor`/`org-admin`)* Create a course. Body: `{ title, description?, duration_weeks?, category? }`.
+- `PATCH /courses/:id` — *(auth required, role: `instructor`/`org-admin`, and ownership: only the course's own instructor)* Update a course.
+
+### Enrollment
+- `POST /enroll` — *(auth required)* Body: `{ course_id }`. `409` if already enrolled, `404` if the course doesn't exist.
+- `GET /my-courses` — *(auth required)* The logged-in user's enrolled courses, joined with real progress.
+- `PATCH /enrollments/:id/progress` — *(auth required, ownership: only the enrollment's own user)* Body: `{ progress_percent }` (0–100).
 
 ---
 
@@ -119,7 +150,18 @@ psql -U postgres -h localhost -d elearning -f db/seed.sql
 node index.js
 ```
 
+`db/schema.sql` is the current schema for fresh installs. `db/migrations/` holds the incremental changes made along the way (role column, instructor↔user link, category column, indexes, enrollment uniqueness) — only relevant if you're upgrading an existing database instead of creating a fresh one.
+
 By default the backend runs at: `http://localhost:5000`
+
+### Running tests
+
+```powershell
+cd backend
+npm test
+```
+
+Runs `jest` + `supertest` against the real local database configured in `.env` (register/login happy + failure paths, one RBAC-denied case). Safe to re-run — each run generates unique test emails.
 
 ---
 
@@ -134,24 +176,34 @@ npm run dev
 
 Default frontend URL: `http://localhost:5173`
 
+### Running tests
+
+```powershell
+npm test
+```
+
+Runs `vitest` (React Testing Library) over `src/**/*.test.jsx` — `CourseCard` rendering/interaction, `AuthContext` login/logout/session-validation, and `PrivateRoute` redirect behavior. Fully isolated from the network (`fetch` is mocked), so no backend or database needed.
+
 ---
 
-## Authentication Flow (Simplified)
+## Authentication Flow
 
-1. User registers → password hashed using `bcrypt`.
-2. Login → `bcrypt.compare()` validates password.
-3. On success → user object saved to `localStorage`.
-4. Dashboard checks `localStorage` for authenticated user; otherwise redirects to login.
+1. User registers or logs in → password hashed/verified with `bcrypt`.
+2. On success, the backend signs a JWT containing only `{ user_id, role }` and returns it alongside a `user` object that never includes the password hash.
+3. The frontend's `AuthContext` stores the token (and user) in `localStorage`, sends it as `Authorization: Bearer <token>` on subsequent requests, and validates it against `GET /me` once on load.
+4. `<PrivateRoute>` (React Router) gates `/dashboard` — no authenticated user means an immediate redirect to `/login`, no imperative page reload.
+5. Protected backend routes use `requireAuth` (verifies the JWT, sets `req.user`), and mutating course/enrollment routes add `requireRole`/`requireOwnership` on top, checked as separate, composable steps.
 
 ---
 
 ## Tech Stack
 
-- **Frontend:** React.js, Vite
+- **Frontend:** React.js, Vite, React Router
 - **Backend:** Node.js, Express.js
 - **Database:** PostgreSQL
-- **Auth:** bcrypt
+- **Auth:** bcrypt, JSON Web Tokens
 - **API:** REST
+- **Testing:** jest + supertest (backend), vitest + React Testing Library (frontend)
 
 
 ---
