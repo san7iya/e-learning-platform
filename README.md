@@ -16,6 +16,7 @@ A Coursera‑inspired project where users can register, log in, browse courses, 
 - **Responsive Frontend:** Built with React + Vite, a shared `AuthContext`, and a consolidated auth-aware header.
 - **Backend API:** Express REST API split into routes/controllers/services layers, PostgreSQL (`pg`), CORS enabled, env-based config via `dotenv`.
 - **Tests:** backend (`jest`+`supertest`) covers auth (register/login happy + failure paths) and an RBAC-denied case; frontend (`vitest`+React Testing Library) covers `CourseCard`, `AuthContext`, and `PrivateRoute`.
+- **Query Performance:** `module.course_id` — the join column used by every course-listing query — was missing an index; measured and fixed, see [Query Performance](#query-performance) below.
 
 ---
 
@@ -33,6 +34,7 @@ e-learning-platform/
 │   ├── middleware/      # Auth (JWT), RBAC, rate limiting
 │   ├── utils/           # Shared helpers (error handling, validation, JWT)
 │   ├── db/              # schema.sql, seed.sql, migrations/
+│   ├── benchmark/       # seed.js + queryBenchmark.js — reproducible query perf numbers
 │   ├── tests/           # jest + supertest
 │   ├── .env.example
 │   └── package.json
@@ -97,7 +99,7 @@ e-learning-platform/
 
 ### module
 - `module_id` SERIAL PRIMARY KEY
-- `course_id` REFERENCES `course`
+- `course_id` REFERENCES `course` — indexed (`idx_module_course_id`), see [Query Performance](#query-performance)
 - `title` VARCHAR(255)
 - `duration_minutes` INT
 
@@ -162,6 +164,34 @@ npm test
 ```
 
 Runs `jest` + `supertest` against the real local database configured in `.env` (register/login happy + failure paths, one RBAC-denied case). Safe to re-run — each run generates unique test emails.
+
+---
+
+## Query Performance
+
+`getAllCourses`, `getRecommendedCourses`, and `getMyCourses` each `LEFT JOIN module ON module.course_id = course.course_id` to compute a real `lessons_count`. That join column had no index — only `course.category` and `course.instructor_id` did (migration `005`). At real seed-data scale (a handful of rows) this is invisible; it isn't at a few thousand.
+
+**Measured, not estimated.** `backend/benchmark/` seeds 3,000 courses / 250 instructors / ~21,000 modules, then benchmarks the exact SQL from `getAllCourses` two ways — `EXPLAIN ANALYZE` (pure DB execution time) and an end-to-end call through the real service function (`performance.now()`, including the Postgres round trip) — 1 warm-up + 10 timed runs each, before and after `CREATE INDEX idx_module_course_id ON module(course_id)`:
+
+| Measurement | Before | After | Improvement |
+|---|---|---|---|
+| DB-level (`EXPLAIN ANALYZE`, avg of 10) | 22.94 ms | 0.09 ms | 99.6% |
+| App-level (service call, avg of 10) | 12.30 ms | 1.18 ms | 90.4% |
+
+Why: without the index, Postgres materializes the full `module` table and nested-loop-joins it against every course row, discarding 231,125 non-matching pairs per query (`Seq Scan on module`, confirmed via the actual query plan). With the index, it does one targeted index probe per course instead of scanning the whole table.
+
+One honest caveat: the DB-level number is *higher* than the app-level number in the "before" row, which looks backwards at first glance. That's `EXPLAIN ANALYZE`'s own per-node timing instrumentation adding overhead on a plan with many loop iterations — not a sign the numbers are wrong. The app-level number is the one that reflects what a real request actually experiences.
+
+To reproduce (adds and removes its own clearly-namespaced rows, doesn't touch real data):
+
+```powershell
+cd backend
+node benchmark/seed.js              # seeds 3,000 benchmark courses (skips if already seeded)
+node benchmark/queryBenchmark.js    # prints before/after timings, adds the index permanently
+node benchmark/seed.js --clean      # removes benchmark rows only, no re-seed (index stays)
+```
+
+The index itself is now permanent — `db/migrations/006_add_module_course_id_index.sql` and `db/schema.sql` both include it, independent of whether you ever run the benchmark.
 
 ---
 

@@ -51,3 +51,4 @@ CREATE TABLE IF NOT EXISTS enrollment (
 
 CREATE INDEX IF NOT EXISTS idx_course_category ON course(category);
 CREATE INDEX IF NOT EXISTS idx_course_instructor_id ON course(instructor_id);
+CREATE INDEX IF NOT EXISTS idx_module_course_id ON module(course_id);
