@@ -37,11 +37,11 @@ A Coursera‑inspired project where users can register, log in, browse courses, 
 - **Authentication:** Register & login with email/password, passwords hashed with `bcrypt`, JWT issued on login/register and sent as a `Bearer` token. Input validation and rate limiting on auth routes. Self-serve registration for `student`, `instructor`, and `org-admin` — an org-admin registration creates a brand-new `organization` row on the spot, so nobody can self-register as admin of an org they don't run.
 - **Role-based dashboards:** `/dashboard` renders a different view per role — students see in-progress courses and recommendations with enroll actions; instructors see the courses they personally teach with enrollment counts and a create/edit CTA; org-admins see every course taught across their organization (read-only, with instructor attribution). Enrollment and progress-tracking UI/routes are hidden entirely from non-students, and the backend enforces the same boundary independently (`requireRole`) so it isn't just a UI restriction.
 - **RBAC:** Role- and ownership-gated course create/edit (`student` / `instructor` / `org-admin`), checked as two separate, composable middleware steps (`requireRole`, `requireOwnership`).
-- **Course Management:** Courses fetched from PostgreSQL with real category and lesson (module) counts; paginated; filterable by category. Instructors/org-admins can create and edit courses through dedicated forms; a course detail page shows full module listings.
+- **Course Management:** Courses fetched from PostgreSQL with real category and lesson (module) counts; paginated; filterable by category. Instructors/org-admins can create and edit courses — including a dynamic lesson editor (add/remove/reorder title + duration rows) — through a shared form; a course detail page shows full module listings.
 - **Enrollment & Progress:** Real enrollment records tied to each user, with per-course progress tracking and unenroll support (with a confirmation dialog warning that progress is lost).
 - **Redesigned Frontend:** A consistent visual system (shared design tokens, bold-border card style, Space Grotesk/Fraunces type) across the landing page, auth screens, header, and course cards, built with React + Vite, a shared `AuthContext`, and role-aware routing (`PrivateRoute`, `RoleRoute`).
 - **Backend API:** Express REST API split into routes/controllers/services layers, PostgreSQL (`pg`), CORS enabled, env-based config via `dotenv`.
-- **Tests:** backend (`jest`+`supertest`, 22 tests) covers auth (register/login happy + failure paths, org-admin registration), and RBAC across course creation, enrollment, and the role-scoped course-listing endpoints; frontend (`vitest`+React Testing Library, 14 tests) covers `CourseCard`, `AuthContext`, and `PrivateRoute`.
+- **Tests:** backend (`jest`+`supertest`, 26 tests) covers auth (register/login happy + failure paths, org-admin registration), RBAC across course creation, enrollment, and the role-scoped course-listing endpoints, and lesson create/replace/preserve behavior; frontend (`vitest`+React Testing Library, 18 tests) covers `CourseCard`, `CourseForm`'s lesson editor, `AuthContext`, and `PrivateRoute`.
 - **Query Performance:** `module.course_id` — the join column used by every course-listing query — was missing an index; measured and fixed, see [Query Performance](#query-performance) below.
 
 ---
@@ -96,7 +96,7 @@ e-learning-platform/
 │       │   ├── AllCourses.jsx       # Browse all courses (category filter, pagination)
 │       │   ├── CourseDetail.jsx     # Single course + modules + enroll/unenroll
 │       │   ├── CourseCard.jsx / .test.jsx
-│       │   ├── CourseForm.jsx       # Shared form used by Create/Edit
+│       │   ├── CourseForm.jsx / .test.jsx   # Shared form (incl. lesson editor) used by Create/Edit
 │       │   ├── CreateCourse.jsx
 │       │   ├── EditCourse.jsx
 │       │   └── MyProgress.jsx       # Student-only progress tracker + unenroll
@@ -175,8 +175,8 @@ All protected routes expect `Authorization: Bearer <token>`, where `<token>` is 
 - `GET /recommended-courses` — *(auth required)* Courses the user isn't enrolled in yet, prioritizing categories they're already enrolled in, capped at 4.
 - `GET /my-taught-courses` — *(auth required, role: `instructor`)* Courses the logged-in instructor teaches, each with a live enrolled-student count.
 - `GET /org-courses` — *(auth required, role: `org-admin`)* Every course taught by instructors in the admin's own organization, with instructor name and enrolled-student count. Returns `[]` if the admin has no courses in their org yet.
-- `POST /courses` — *(auth required, role: `instructor`/`org-admin`)* Create a course. Body: `{ title, description?, duration_weeks?, category? }`.
-- `PATCH /courses/:id` — *(auth required, role: `instructor`/`org-admin`, and ownership: only the course's own instructor)* Update a course.
+- `POST /courses` — *(auth required, role: `instructor`/`org-admin`)* Create a course. Body: `{ title, description?, duration_weeks?, category?, modules? }`, where `modules` is `[{ title, duration_minutes }]`. Rows with a blank title are dropped; the course and its lessons are created in one transaction.
+- `PATCH /courses/:id` — *(auth required, role: `instructor`/`org-admin`, and ownership: only the course's own instructor)* Update a course. If `modules` is included, it **replaces** the full lesson list (delete + re-insert, in a transaction); omitting it leaves existing lessons untouched.
 
 ### Enrollment
 - `POST /enroll` — *(auth required, role: `student`)* Body: `{ course_id }`. `409` if already enrolled, `404` if the course doesn't exist. Instructors/org-admins get `403` — enrollment is a student-only action.
@@ -214,7 +214,7 @@ cd backend
 npm test
 ```
 
-Runs `jest` + `supertest` (22 tests) against the real local database configured in `.env` — auth happy/failure paths, org-admin registration, and RBAC across course creation, enrollment, and the role-scoped `/my-taught-courses` and `/org-courses` endpoints. Safe to re-run — each run generates unique test emails.
+Runs `jest` + `supertest` (26 tests) against the real local database configured in `.env` — auth happy/failure paths, org-admin registration, RBAC across course creation, enrollment, and the role-scoped `/my-taught-courses` and `/org-courses` endpoints, and lesson create/replace/preserve behavior. Safe to re-run — each run generates unique test emails.
 
 ---
 
@@ -277,13 +277,13 @@ Default frontend URL: `http://localhost:5173`
 npm test
 ```
 
-Runs `vitest` (React Testing Library, 14 tests) over `src/**/*.test.jsx` — `CourseCard` rendering/interaction (including instructor-only enrolled-count and edit-link states), `AuthContext` login/logout/session-validation, and `PrivateRoute` redirect behavior. Fully isolated from the network (`fetch` is mocked), so no backend or database needed.
+Runs `vitest` (React Testing Library, 18 tests) over `src/**/*.test.jsx` — `CourseCard` rendering/interaction (including instructor-only enrolled-count and edit-link states), `CourseForm`'s lesson editor (add/remove rows, pre-fill on edit, blank-title filtering on submit), `AuthContext` login/logout/session-validation, and `PrivateRoute` redirect behavior. Fully isolated from the network (`fetch` is mocked), so no backend or database needed.
 
 ---
 
 ## Continuous Integration
 
-`.github/workflows/ci.yml` runs on every push/PR to `main`: it spins up a real Postgres service container, applies `schema.sql` + `seed.sql`, and runs both test suites (22 backend + 14 frontend) — the same commands as above, just automated.
+`.github/workflows/ci.yml` runs on every push/PR to `main`: it spins up a real Postgres service container, applies `schema.sql` + `seed.sql`, and runs both test suites (26 backend + 18 frontend) — the same commands as above, just automated.
 
 ---
 
