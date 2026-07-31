@@ -19,8 +19,8 @@ app.use((req, res, next) => {
 
 // enable cors
 app.use(cors({
-  origin: "http://localhost:5173",
-  methods: "GET,POST,PATCH"
+  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  methods: "GET,POST,PATCH,DELETE"
 }));
 
 app.use(express.json());
