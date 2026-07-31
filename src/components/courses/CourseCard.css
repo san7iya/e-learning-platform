@@ -1,99 +1,117 @@
-.course-card {
-  background: white;
-  border-radius: 12px;
-  padding: clamp(14px, 1.8vw, 20px);
-  box-shadow: 0 6px 18px rgba(15, 15, 30, 0.06);
+.ccard {
+  background: #fff;
+  border: var(--border);
+  box-shadow: var(--shadow);
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   width: 100%;
   box-sizing: border-box;
-  transition: 0.2s ease-in-out;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
-.course-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(15, 15, 30, 0.12);
+.ccard:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--ink);
 }
 
-/* Thumbnails become real images */
-.course-thumb {
-  width: 100%;
-  height: clamp(140px, 15vw, 180px);
-  object-fit: cover;
-  border-radius: 10px;
+.ccard .tag {
+  margin-bottom: 4px;
 }
 
-/* Blue pill tag for category */
-.category-tag {
-  background: #e0e7ff;
-  color: #3744c5;
-  font-size: 12px;
-  padding: 3px 12px;
-  border-radius: 50px;
-  display: inline-block;
-  width: fit-content;
-}
-
-h3 {
-  font-size: clamp(1rem, 1.6vw, 1.15rem);
-  font-weight: 600;
+.ccard h3 {
   margin: 0;
+}
+
+.ccard h3 a {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--ink);
   line-height: 1.25;
+  text-decoration: none;
 }
 
-.author {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 4px 0;
+.ccard h3 a:hover {
+  color: var(--moss);
 }
 
-.avatar {
-  background: #ccc;
-  height: 28px;
-  width: 28px;
-  border-radius: 50%;
+.ccard .meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-soft);
 }
 
-.progress {
-  height: 8px;
-  background: #eee;
-  border-radius: 6px;
-  overflow: hidden;
+.ccard .track {
+  height: 12px;
+  border: 2px solid var(--ink);
+  background: #fff;
+  position: relative;
+  margin-top: 6px;
 }
 
-.progress-bar {
-  background: #6c3ba1;
+.ccard .track .fill {
+  position: absolute;
+  left: 0;
+  top: 0;
   height: 100%;
-  border-radius: 6px;
+  background: var(--highlighter);
 }
 
-.lesson-count {
-  font-size: 0.85rem;
-  color: #444;
-  margin-top: 2px;
+.ccard .pct {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  margin-top: 6px;
+  display: block;
+  color: var(--ink);
 }
 
-.enroll-btn {
-  background-color: #6c3ba1;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
+.ccard .enroll-btn {
+  align-self: flex-start;
+  margin-top: 8px;
+  background: var(--moss);
+  color: #fff;
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 9px 18px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
   font-size: 14px;
-  font-weight: 600;
   cursor: pointer;
-  transition: filter 0.2s ease;
-  margin-top: 4px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
-.enroll-btn:hover:not(:disabled) {
-  filter: brightness(0.95);
+.ccard .enroll-btn:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
 }
 
-.enroll-btn:disabled {
-  background-color: #a3a3a3;
+.ccard .enroll-btn:disabled {
+  background: var(--ink-soft);
   cursor: default;
+  box-shadow: none;
+  transform: none;
 }
 
+.ccard .enrolled-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 4px 0 0;
+}
+
+.ccard .edit-link {
+  align-self: flex-start;
+  margin-top: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--moss);
+  text-decoration: none;
+}
+
+.ccard .edit-link:hover {
+  text-decoration: underline;
+}

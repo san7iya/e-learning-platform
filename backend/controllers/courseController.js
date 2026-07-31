@@ -27,6 +27,47 @@ async function getRecommendedCourses(req, res) {
   }
 }
 
+async function getMyTaughtCourses(req, res) {
+  try {
+    const courses = await courseService.getCoursesByInstructorUser(req.user.user_id);
+    res.json({ success: true, courses });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+}
+
+async function getOrgCourses(req, res) {
+  try {
+    const courses = await courseService.getCoursesByOrgAdminUser(req.user.user_id);
+    res.json({ success: true, courses });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+}
+
+async function getCategories(req, res) {
+  try {
+    const categories = await courseService.getDistinctCategories();
+    res.json({ success: true, categories });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+}
+
+async function getCourseDetail(req, res) {
+  try {
+    const course = await courseService.getCourseById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    res.json({ success: true, course });
+  } catch (err) {
+    handleServerError(res, err);
+  }
+}
+
 async function createCourse(req, res) {
   const { title, description, duration_weeks, category } = req.body;
 
@@ -70,4 +111,4 @@ async function updateCourse(req, res) {
   }
 }
 
-module.exports = { getCourses, getRecommendedCourses, createCourse, updateCourse };
+module.exports = { getCourses, getRecommendedCourses, getMyTaughtCourses, getOrgCourses, getCategories, getCourseDetail, createCourse, updateCourse };

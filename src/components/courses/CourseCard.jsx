@@ -1,42 +1,63 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import "./CourseCard.css";
-import courseThumbnail from "./coursecard_photo.svg";
+import { getCategoryColor } from "../../utils/categoryColor";
 
 export default function CourseCard({
+  id,
   title,
   author,
-  progress,
-  lessonsDone,
   totalLessons,
+  durationWeeks,
   category,
+  progress,
   onEnroll,
-  enrolled
+  enrolled,
+  enrolledCount,
+  editHref
 }) {
   return (
-    <div className="course-card">
-      <img src={courseThumbnail} alt="course thumbnail" className="course-thumb" />
+    <div className="ccard">
+      {category && (
+        <span className="tag" style={{ background: getCategoryColor(category) }}>
+          {category}
+        </span>
+      )}
 
-      <span className="category-tag">{category}</span>
+      <h3>{id ? <Link to={`/courses/${id}`}>{title}</Link> : title}</h3>
 
-      <h3>{title}</h3>
-
-      <div className="author">
-        <div className="avatar"></div>
-        <span>{author}</span>
+      <div className="meta">
+        {author && <span>{author}</span>}
+        {author && (totalLessons != null || durationWeeks != null) && <span> · </span>}
+        {totalLessons != null && <span>{totalLessons} lesson{totalLessons === 1 ? "" : "s"}</span>}
+        {totalLessons != null && durationWeeks != null && <span> · </span>}
+        {durationWeeks != null && <span>{durationWeeks} wk</span>}
       </div>
 
-      <div className="progress">
-        <div className="progress-bar" style={{ width: `${progress}%` }}></div>
-      </div>
+      {progress != null && (
+        <>
+          <div className="track">
+            <div className="fill" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="pct">{progress}% complete</span>
+        </>
+      )}
 
-      <span className="lesson-count">Lesson {lessonsDone} of {totalLessons}</span>
+      {enrolledCount != null && (
+        <p className="enrolled-count">
+          {enrolledCount} student{enrolledCount === 1 ? "" : "s"} enrolled
+        </p>
+      )}
 
       {onEnroll && (
         <button className="enroll-btn" onClick={onEnroll} disabled={enrolled}>
           {enrolled ? "Enrolled" : "Enroll"}
         </button>
       )}
+
+      {editHref && (
+        <Link to={editHref} className="edit-link">Edit</Link>
+      )}
     </div>
   );
 }
-

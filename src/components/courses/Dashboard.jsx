@@ -1,16 +1,168 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Header from "../header/Header";
-import { Pencil, Monitor, Receipt, Briefcase } from "lucide-react";
-import courseThumbnail from "./coursecard_photo.svg";
+import Footer from "../footer/Footer";
+import CourseCard from "./CourseCard";
+import "./Dashboard.css";
 import { API_BASE } from "../../config";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Dashboard() {
   const { user, token } = useAuth();
-  const navigate = useNavigate();
+
+  if (user?.role === "instructor") {
+    return <InstructorDashboard user={user} token={token} />;
+  }
+
+  if (user?.role === "org-admin") {
+    return <OrgAdminDashboard user={user} token={token} />;
+  }
+
+  return <StudentDashboard user={user} token={token} />;
+}
+
+function OrgAdminDashboard({ user, token }) {
+  const [orgCourses, setOrgCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/org-courses`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const formatted = data.courses.map(c => ({
+            id: c.course_id,
+            title: c.title,
+            author: c.instructor,
+            totalLessons: c.lessons_count,
+            durationWeeks: c.duration_weeks,
+            category: c.category || "Uncategorized",
+            enrolledCount: c.enrolled_count
+          }));
+          setOrgCourses(formatted);
+        } else {
+          setLoadError(true);
+        }
+      })
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const username = user?.name || "there";
+
+  return (
+    <>
+      <Header />
+
+      <div className="section">
+        <h1 className="dashboard-welcome">Welcome back, {username}.</h1>
+
+        <div className="section-head">
+          <h2>Courses in your organization</h2>
+          <Link to="/courses/new" className="see-all">+ create new course</Link>
+        </div>
+
+        {loading ? (
+          <p className="section-empty">Loading courses...</p>
+        ) : loadError ? (
+          <div className="empty-box">
+            <h3>Couldn't load courses</h3>
+            <p>Check your connection and try again.</p>
+          </div>
+        ) : orgCourses.length > 0 ? (
+          <div className="grid">
+            {orgCourses.map(c => <CourseCard key={c.id} {...c} />)}
+          </div>
+        ) : (
+          <p className="section-empty">
+            No courses in your organization yet.
+          </p>
+        )}
+      </div>
+
+      <Footer />
+    </>
+  );
+}
+
+function InstructorDashboard({ user, token }) {
+  const [taughtCourses, setTaughtCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/my-taught-courses`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const formatted = data.courses.map(c => ({
+            id: c.course_id,
+            title: c.title,
+            totalLessons: c.lessons_count,
+            durationWeeks: c.duration_weeks,
+            category: c.category || "Uncategorized",
+            enrolledCount: c.enrolled_count
+          }));
+          setTaughtCourses(formatted);
+        } else {
+          setLoadError(true);
+        }
+      })
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const username = user?.name || "there";
+
+  return (
+    <>
+      <Header />
+
+      <div className="section">
+        <h1 className="dashboard-welcome">Welcome back, {username}.</h1>
+
+        <div className="section-head">
+          <h2>My courses</h2>
+          <Link to="/courses/new" className="see-all">+ create new course</Link>
+        </div>
+
+        {loading ? (
+          <p className="section-empty">Loading your courses...</p>
+        ) : loadError ? (
+          <div className="empty-box">
+            <h3>Couldn't load your courses</h3>
+            <p>Check your connection and try again.</p>
+          </div>
+        ) : taughtCourses.length > 0 ? (
+          <div className="grid">
+            {taughtCourses.map(c => (
+              <CourseCard key={c.id} {...c} editHref={`/courses/${c.id}/edit`} />
+            ))}
+          </div>
+        ) : (
+          <p className="section-empty">
+            You haven't created any courses yet — <Link to="/courses/new">create your first course</Link>.
+          </p>
+        )}
+      </div>
+
+      <Footer />
+    </>
+  );
+}
+
+function StudentDashboard({ user, token }) {
   const [inProgressCourses, setInProgressCourses] = useState([]);
   const [recommendedCourses, setRecommendedCourses] = useState([]);
+  const [enrolledIds, setEnrolledIds] = useState(new Set());
+  const [loadingInProgress, setLoadingInProgress] = useState(true);
+  const [inProgressError, setInProgressError] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
     fetch(`${API_BASE}/my-courses`, {
@@ -20,15 +172,21 @@ export default function Dashboard() {
       .then(data => {
         if (data.success) {
           const formatted = data.courses.map(c => ({
+            id: c.course_id,
             title: c.title,
             author: c.instructor,
             progress: c.progress_percent,
+            totalLessons: c.lessons_count,
+            durationWeeks: c.duration_weeks,
             category: c.category || "Uncategorized"
           }));
           setInProgressCourses(formatted);
+        } else {
+          setInProgressError(true);
         }
       })
-      .catch(err => console.log("Fetch error:", err));
+      .catch(() => setInProgressError(true))
+      .finally(() => setLoadingInProgress(false));
   }, [token]);
 
   useEffect(() => {
@@ -39,8 +197,11 @@ export default function Dashboard() {
       .then(data => {
         if (data.success) {
           const formatted = data.courses.map(c => ({
+            id: c.course_id,
             title: c.title,
             author: c.instructor,
+            totalLessons: c.lessons_count,
+            durationWeeks: c.duration_weeks,
             category: c.category || "Uncategorized"
           }));
           setRecommendedCourses(formatted);
@@ -49,205 +210,85 @@ export default function Dashboard() {
       .catch(err => console.log("Fetch error:", err));
   }, [token]);
 
-  const username = user?.name || "User";
+  const handleEnroll = async (courseId) => {
+    setActionError("");
 
-  const categories = [
-    { icon: Pencil, title: "Design", color: "#2dd4bf" },
-    { icon: Monitor, title: "Development", color: "#818cf8" },
-    { icon: Receipt, title: "Finance", color: "#60a5fa" },
-    { icon: Briefcase, title: "Business", color: "#14b8a6" }
-  ];
+    try {
+      const response = await fetch(`${API_BASE}/enroll`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ course_id: courseId })
+      });
 
-  const Card = ({ title, author, progress, price, oldPrice, category }) => (
-    <div
-      style={{
-        background: "#fff",
-        borderRadius: "12px",
-        padding: "16px",
-        boxShadow: "0 6px 18px rgba(15, 15, 30, 0.06)",
-        cursor: "pointer",
-        transition: "0.2s",
-        width: "100%"
-      }}
-    >
-      <img
-        src={courseThumbnail}
-        style={{
-          width: "100%",
-          height: "160px",
-          objectFit: "cover",
-          borderRadius: "10px",
-          marginBottom: "10px"
-        }}
-      />
+      const data = await response.json();
 
-      {category && (
-        <span
-          style={{
-            background: "#e0e7ff",
-            color: "#3744c5",
-            fontSize: "12px",
-            padding: "3px 12px",
-            borderRadius: "50px",
-            display: "inline-block",
-            marginBottom: "6px"
-          }}
-        >
-          {category}
-        </span>
-      )}
+      if (data.success || response.status === 409) {
+        setEnrolledIds(prev => new Set(prev).add(courseId));
+      } else {
+        setActionError(data.message || "Could not enroll in course. Please try again.");
+      }
+    } catch (err) {
+      setActionError("Couldn't reach the server — check your connection and try again.");
+    }
+  };
 
-      <h3 style={{ fontSize: "18px", fontWeight: "600", margin: "6px 0" }}>{title}</h3>
-
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-        <div style={{ width: "28px", height: "28px", background: "#ccc", borderRadius: "50%" }} />
-        <span style={{ fontSize: "14px", color: "#374151" }}>{author}</span>
-      </div>
-
-      {progress !== undefined && (
-        <div style={{ height: "8px", background: "#eee", borderRadius: "6px", overflow: "hidden" }}>
-          <div style={{ height: "8px", width: `${progress}%`, background: "#6c3ba1" }} />
-        </div>
-      )}
-
-      {price && (
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
-          <span style={{ textDecoration: "line-through", fontSize: "12px", color: "#888" }}>{oldPrice}</span>
-          <span style={{ fontSize: "18px", fontWeight: "700", color: "#6c3ba1" }}>{price}</span>
-        </div>
-      )}
-    </div>
-  );
+  const username = user?.name || "there";
 
   return (
     <>
       <Header />
 
-      <div
-        style={{
-          background: "#b6baf6",
-          padding: "60px 32px",
-          width: "100%"
-        }}
-      >
-        <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "32px" }}>
-            <h1 style={{ fontSize: "28px", fontWeight: "600" }}>
-              Welcome back, {username}! Ready for your next lesson?
-            </h1>
-            <span style={{ fontWeight: "700", color: "#6c3ba1", cursor: "pointer" }}>View history</span>
-          </div>
+      <div className="section">
+        <h1 className="dashboard-welcome">Welcome back, {username}.</h1>
 
-          {inProgressCourses.length > 0 ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px" }}>
-              {inProgressCourses.map((c, i) => (
-                <Card key={i} {...c} />
-              ))}
-            </div>
-          ) : (
-            <p>You haven't enrolled in any courses yet — browse courses to get started.</p>
-          )}
+        <div className="section-head">
+          <h2>Continue learning</h2>
+          <Link to="/courses" className="see-all">browse all &rarr;</Link>
         </div>
+
+        {actionError && <p className="error-banner">{actionError}</p>}
+
+        {loadingInProgress ? (
+          <p className="section-empty">Loading your courses...</p>
+        ) : inProgressError ? (
+          <div className="empty-box">
+            <h3>Couldn't load your courses</h3>
+            <p>Check your connection and try again.</p>
+          </div>
+        ) : inProgressCourses.length > 0 ? (
+          <div className="grid">
+            {inProgressCourses.map(c => <CourseCard key={c.id} {...c} />)}
+          </div>
+        ) : (
+          <p className="section-empty">
+            You haven't enrolled in any courses yet — <Link to="/courses">browse courses</Link> to get started.
+          </p>
+        )}
       </div>
 
-      <section style={{ background: "#fff", padding: "80px 0" }}>
-        <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 32px" }}>
-          <h2 style={{ fontSize: "32px", fontWeight: "600", marginBottom: "40px" }}>
-            Choose favourite course from top category
-          </h2>
+      {recommendedCourses.length > 0 && (
+        <div className="section">
+          <div className="section-head">
+            <h2>Recommended for you</h2>
+          </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px" }}>
-            {categories.map((cat, i) => (
-              <div
-                key={i}
-                onClick={() => navigate(`/courses?category=${encodeURIComponent(cat.title)}`)}
-                style={{
-                  background: "#fff",
-                  borderRadius: "12px",
-                  padding: "24px",
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.06)",
-                  cursor: "pointer"
-                }}
-              >
-                <div
-                  style={{
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "12px",
-                    background: cat.color,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: "12px"
-                  }}
-                >
-                  <cat.icon color="#fff" size={30} />
-                </div>
-
-                <h3 style={{ fontWeight: "600", marginBottom: "6px" }}>{cat.title}</h3>
-                <p style={{ color: "#555", fontSize: "14px" }}>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                </p>
-              </div>
+          <div className="grid">
+            {recommendedCourses.map(c => (
+              <CourseCard
+                key={c.id}
+                {...c}
+                enrolled={enrolledIds.has(c.id)}
+                onEnroll={() => handleEnroll(c.id)}
+              />
             ))}
           </div>
         </div>
-      </section>
+      )}
 
-      <section style={{ background: "#f9fafb", padding: "60px 0" }}>
-        <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 32px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "40px" }}>
-            <h2 style={{ fontSize: "32px", fontWeight: "600" }}>Recommended for you</h2>
-            <span style={{ color: "#6c3ba1", fontWeight: "700", cursor: "pointer" }}>See all</span>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px" }}>
-            {recommendedCourses.map((c, i) => (
-              <Card key={i} {...c} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <footer style={{ background: "#b6baf6", padding: "60px 0", color: "#fff" }}>
-        <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 32px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "40px", marginBottom: "40px" }}>
-
-            <div>
-              <h3 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "8px" }}>Brainy.</h3>
-              <p>Learning Reinvented</p>
-            </div>
-
-            <div>
-              <h4 style={{ fontWeight: "600", marginBottom: "10px" }}>Company</h4>
-              <p>About us</p>
-              <p>Contact</p>
-              <p>Values & Press</p>
-              <p>Career</p>
-            </div>
-
-            <div>
-              <h4 style={{ fontWeight: "600", marginBottom: "10px" }}>Essentials</h4>
-              <p>Pricing</p>
-              <p>Courses</p>
-              <p>Privacy policy</p>
-              <p>Your Agreements</p>
-            </div>
-
-            <div>
-              <h4 style={{ fontWeight: "600", marginBottom: "10px" }}>Follow us</h4>
-              <p>Facebook</p>
-              <p>Twitter</p>
-              <p>Newsletter</p>
-              <p>Instagram</p>
-            </div>
-          </div>
-
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.3)", paddingTop: "20px", textAlign: "center" }}>
-            Brainy ©2024 – All rights reserved
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }

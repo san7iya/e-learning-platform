@@ -4,7 +4,7 @@ const { EMAIL_RE, SELF_SERVE_ROLES } = require("../utils/validation");
 const { signToken } = require("../utils/jwt");
 
 async function register(req, res) {
-  const { name, email, password, role = "student" } = req.body;
+  const { name, email, password, role = "student", org_name, org_location } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ success: false, message: "Name, email, and password are required" });
@@ -18,9 +18,14 @@ async function register(req, res) {
   if (!SELF_SERVE_ROLES.includes(role)) {
     return res.status(400).json({ success: false, message: "Invalid role" });
   }
+  if (role === "org-admin" && !org_name) {
+    return res.status(400).json({ success: false, message: "Organization name is required" });
+  }
 
   try {
-    const user = await authService.registerUser(name, email, password, role);
+    const user = role === "org-admin"
+      ? await authService.registerOrgAdmin(name, email, password, org_name, org_location)
+      : await authService.registerUser(name, email, password, role);
     const token = signToken({ user_id: user.user_id, role: user.role });
     return res.json({ success: true, token, user });
   } catch (err) {

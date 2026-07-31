@@ -1,5 +1,11 @@
 -- Schema for the elearning database, as documented in README.md
 
+CREATE TABLE IF NOT EXISTS organization (
+  org_id    SERIAL PRIMARY KEY,
+  name      VARCHAR(100),
+  location  VARCHAR(255)
+);
+
 CREATE TABLE IF NOT EXISTS users (
   user_id    SERIAL PRIMARY KEY,
   name       VARCHAR(100),
@@ -7,13 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
   password   TEXT,
   join_date  TIMESTAMP,
   role       VARCHAR(20) NOT NULL DEFAULT 'student'
-             CHECK (role IN ('student', 'instructor', 'org-admin'))
-);
-
-CREATE TABLE IF NOT EXISTS organization (
-  org_id    SERIAL PRIMARY KEY,
-  name      VARCHAR(100),
-  location  VARCHAR(255)
+             CHECK (role IN ('student', 'instructor', 'org-admin')),
+  org_id     INT REFERENCES organization(org_id)
 );
 
 CREATE TABLE IF NOT EXISTS instructor (

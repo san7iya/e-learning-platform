@@ -51,6 +51,52 @@ async function getRecommendedCourses(userId, limit = 4) {
   return result.rows;
 }
 
+async function getCoursesByInstructorUser(userId) {
+  const result = await pool.query(
+    `SELECT c.course_id, c.title, c.description, c.duration_weeks, c.category,
+            COUNT(DISTINCT e.enrollment_id)::int AS enrolled_count,
+            COUNT(DISTINCT m.module_id)::int AS lessons_count
+     FROM course c
+     JOIN instructor i ON c.instructor_id = i.instructor_id
+     LEFT JOIN enrollment e ON e.course_id = c.course_id
+     LEFT JOIN module m ON m.course_id = c.course_id
+     WHERE i.user_id = $1
+     GROUP BY c.course_id
+     ORDER BY c.course_id`,
+    [userId]
+  );
+  return result.rows;
+}
+
+async function getDistinctCategories() {
+  const result = await pool.query(
+    `SELECT DISTINCT category FROM course WHERE category IS NOT NULL ORDER BY category`
+  );
+  return result.rows.map(r => r.category);
+}
+
+async function getCourseById(courseId) {
+  const courseResult = await pool.query(
+    `SELECT c.course_id, c.title, c.description, c.duration_weeks, c.category,
+            i.name AS instructor, i.user_id AS instructor_user_id
+     FROM course c
+     LEFT JOIN instructor i ON c.instructor_id = i.instructor_id
+     WHERE c.course_id = $1`,
+    [courseId]
+  );
+  if (courseResult.rows.length === 0) return null;
+
+  const modulesResult = await pool.query(
+    `SELECT module_id, title, duration_minutes
+     FROM module
+     WHERE course_id = $1
+     ORDER BY module_id`,
+    [courseId]
+  );
+
+  return { ...courseResult.rows[0], modules: modulesResult.rows };
+}
+
 async function getCourseOwnerUserId(courseId) {
   const result = await pool.query(
     `SELECT i.user_id
@@ -72,14 +118,40 @@ async function getOrCreateInstructorForUser(userId) {
     return existing.rows[0].instructor_id;
   }
 
-  const userResult = await pool.query("SELECT name FROM users WHERE user_id = $1", [userId]);
+  const userResult = await pool.query("SELECT name, org_id FROM users WHERE user_id = $1", [userId]);
   const name = userResult.rows[0]?.name || "Unknown";
+  const orgId = userResult.rows[0]?.org_id || null;
 
   const created = await pool.query(
-    "INSERT INTO instructor (name, user_id) VALUES ($1, $2) RETURNING instructor_id",
-    [name, userId]
+    "INSERT INTO instructor (name, user_id, org_id) VALUES ($1, $2, $3) RETURNING instructor_id",
+    [name, userId, orgId]
   );
   return created.rows[0].instructor_id;
+}
+
+async function getCoursesByOrgAdminUser(userId) {
+  const userResult = await pool.query("SELECT org_id FROM users WHERE user_id = $1", [userId]);
+  const orgId = userResult.rows[0]?.org_id;
+
+  if (!orgId) {
+    return [];
+  }
+
+  const result = await pool.query(
+    `SELECT c.course_id, c.title, c.description, c.duration_weeks, c.category,
+            i.name AS instructor,
+            COUNT(DISTINCT e.enrollment_id)::int AS enrolled_count,
+            COUNT(DISTINCT m.module_id)::int AS lessons_count
+     FROM course c
+     JOIN instructor i ON c.instructor_id = i.instructor_id
+     LEFT JOIN enrollment e ON e.course_id = c.course_id
+     LEFT JOIN module m ON m.course_id = c.course_id
+     WHERE i.org_id = $1
+     GROUP BY c.course_id, i.name
+     ORDER BY c.course_id`,
+    [orgId]
+  );
+  return result.rows;
 }
 
 async function createCourse({ title, description, durationWeeks, instructorId, category }) {
@@ -109,6 +181,10 @@ async function updateCourse(courseId, { title, description, durationWeeks, categ
 module.exports = {
   getAllCourses,
   getRecommendedCourses,
+  getCoursesByInstructorUser,
+  getCoursesByOrgAdminUser,
+  getDistinctCategories,
+  getCourseById,
   getCourseOwnerUserId,
   getOrCreateInstructorForUser,
   createCourse,
