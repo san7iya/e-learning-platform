@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/san7iya/e-learning-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/san7iya/e-learning-platform/actions/workflows/ci.yml)
 
+**Live demo:** [brainy-elearning.vercel.app](https://brainy-elearning.vercel.app) — *first load may take ~30s, the free-tier backend spins down after 15 minutes idle*
+
 > Full‑stack E‑Learning Platform (React + Vite frontend, Node.js + Express backend, PostgreSQL)
 
 A Coursera‑inspired project where users can register, log in, browse courses, and access a role-specific dashboard — students track enrollment and progress, instructors manage the courses they teach, and org-admins oversee every course taught within their organization.
