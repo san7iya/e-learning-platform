@@ -38,6 +38,58 @@
   box-shadow: var(--shadow-sm);
 }
 
+.course-form .module-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.course-form .module-row input {
+  height: 40px;
+}
+
+.course-form .module-row input[type="text"] {
+  flex: 1;
+}
+
+.course-form .module-duration {
+  width: 80px;
+  flex: none;
+}
+
+.course-form .module-remove {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: var(--border);
+  background: #fff;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.course-form .module-remove:hover {
+  background: var(--coral);
+  color: #fff;
+}
+
+.course-form .module-add {
+  align-self: flex-start;
+  border: var(--border);
+  background: #fff;
+  color: var(--ink);
+  padding: 8px 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.course-form .module-add:hover {
+  box-shadow: var(--shadow-sm);
+}
+
 .course-form .course-form-submit {
   width: 100%;
   text-align: center;

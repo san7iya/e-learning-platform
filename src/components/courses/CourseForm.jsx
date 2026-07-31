@@ -6,7 +6,15 @@ export default function CourseForm({ initialValues, onSubmit, submitLabel, error
   const [description, setDescription] = useState(initialValues?.description || "");
   const [category, setCategory] = useState(initialValues?.category || "");
   const [durationWeeks, setDurationWeeks] = useState(initialValues?.duration_weeks ?? "");
+  const [modules, setModules] = useState(
+    initialValues?.modules?.map(m => ({ title: m.title, duration_minutes: m.duration_minutes ?? "" })) || []
+  );
   const [submitting, setSubmitting] = useState(false);
+
+  const addModule = () => setModules(prev => [...prev, { title: "", duration_minutes: "" }]);
+  const removeModule = (index) => setModules(prev => prev.filter((_, i) => i !== index));
+  const updateModule = (index, field, value) =>
+    setModules(prev => prev.map((m, i) => (i === index ? { ...m, [field]: value } : m)));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,7 +24,13 @@ export default function CourseForm({ initialValues, onSubmit, submitLabel, error
         title,
         description,
         category,
-        duration_weeks: durationWeeks === "" ? null : Number(durationWeeks)
+        duration_weeks: durationWeeks === "" ? null : Number(durationWeeks),
+        modules: modules
+          .filter(m => m.title.trim())
+          .map(m => ({
+            title: m.title.trim(),
+            duration_minutes: m.duration_minutes === "" ? null : Number(m.duration_minutes)
+          }))
       });
     } finally {
       setSubmitting(false);
@@ -67,6 +81,41 @@ export default function CourseForm({ initialValues, onSubmit, submitLabel, error
           value={durationWeeks}
           onChange={(e) => setDurationWeeks(e.target.value)}
         />
+      </div>
+
+      <div className="input-group">
+        <label>Lessons</label>
+
+        {modules.map((m, i) => (
+          <div className="module-row" key={i}>
+            <input
+              type="text"
+              placeholder="Lesson title"
+              value={m.title}
+              onChange={(e) => updateModule(i, "title", e.target.value)}
+            />
+            <input
+              type="number"
+              min="0"
+              placeholder="min"
+              className="module-duration"
+              value={m.duration_minutes}
+              onChange={(e) => updateModule(i, "duration_minutes", e.target.value)}
+            />
+            <button
+              type="button"
+              className="module-remove"
+              onClick={() => removeModule(i)}
+              aria-label="Remove lesson"
+            >
+              &times;
+            </button>
+          </div>
+        ))}
+
+        <button type="button" className="module-add" onClick={addModule}>
+          + Add lesson
+        </button>
       </div>
 
       <button type="submit" className="btn-primary course-form-submit" disabled={submitting}>

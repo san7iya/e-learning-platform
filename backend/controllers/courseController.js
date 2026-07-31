@@ -68,8 +68,19 @@ async function getCourseDetail(req, res) {
   }
 }
 
+function normalizeModules(modules) {
+  if (!Array.isArray(modules)) return undefined;
+
+  return modules
+    .filter(m => m && typeof m.title === "string" && m.title.trim())
+    .map(m => ({
+      title: m.title.trim(),
+      duration_minutes: m.duration_minutes === "" || m.duration_minutes == null ? null : Number(m.duration_minutes)
+    }));
+}
+
 async function createCourse(req, res) {
-  const { title, description, duration_weeks, category } = req.body;
+  const { title, description, duration_weeks, category, modules } = req.body;
 
   if (!title) {
     return res.status(400).json({ success: false, message: "Title is required" });
@@ -82,7 +93,8 @@ async function createCourse(req, res) {
       description,
       durationWeeks: duration_weeks,
       instructorId,
-      category
+      category,
+      modules: normalizeModules(modules) || []
     });
     res.status(201).json({ success: true, course });
   } catch (err) {
@@ -91,14 +103,15 @@ async function createCourse(req, res) {
 }
 
 async function updateCourse(req, res) {
-  const { title, description, duration_weeks, category } = req.body;
+  const { title, description, duration_weeks, category, modules } = req.body;
 
   try {
     const course = await courseService.updateCourse(req.params.id, {
       title,
       description,
       durationWeeks: duration_weeks,
-      category
+      category,
+      modules: normalizeModules(modules)
     });
 
     if (!course) {

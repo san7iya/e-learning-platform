@@ -154,28 +154,76 @@ async function getCoursesByOrgAdminUser(userId) {
   return result.rows;
 }
 
-async function createCourse({ title, description, durationWeeks, instructorId, category }) {
-  const result = await pool.query(
-    `INSERT INTO course (title, description, duration_weeks, instructor_id, category)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING course_id, title, description, duration_weeks, instructor_id, category`,
-    [title, description, durationWeeks, instructorId, category || null]
-  );
-  return result.rows[0];
+async function createCourse({ title, description, durationWeeks, instructorId, category, modules = [] }) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const courseResult = await client.query(
+      `INSERT INTO course (title, description, duration_weeks, instructor_id, category)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING course_id, title, description, duration_weeks, instructor_id, category`,
+      [title, description, durationWeeks, instructorId, category || null]
+    );
+    const course = courseResult.rows[0];
+
+    for (const m of modules) {
+      await client.query(
+        `INSERT INTO module (course_id, title, duration_minutes) VALUES ($1, $2, $3)`,
+        [course.course_id, m.title, m.duration_minutes]
+      );
+    }
+
+    await client.query("COMMIT");
+    return course;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
-async function updateCourse(courseId, { title, description, durationWeeks, category }) {
-  const result = await pool.query(
-    `UPDATE course
-     SET title = COALESCE($1, title),
-         description = COALESCE($2, description),
-         duration_weeks = COALESCE($3, duration_weeks),
-         category = COALESCE($4, category)
-     WHERE course_id = $5
-     RETURNING course_id, title, description, duration_weeks, instructor_id, category`,
-    [title, description, durationWeeks, category, courseId]
-  );
-  return result.rows[0] || null;
+async function updateCourse(courseId, { title, description, durationWeeks, category, modules }) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `UPDATE course
+       SET title = COALESCE($1, title),
+           description = COALESCE($2, description),
+           duration_weeks = COALESCE($3, duration_weeks),
+           category = COALESCE($4, category)
+       WHERE course_id = $5
+       RETURNING course_id, title, description, duration_weeks, instructor_id, category`,
+      [title, description, durationWeeks, category, courseId]
+    );
+    const course = result.rows[0] || null;
+
+    // modules is only synced when explicitly provided — omitting it from a
+    // PATCH leaves the existing lesson list untouched, consistent with the
+    // COALESCE behavior of the other fields above.
+    if (course && Array.isArray(modules)) {
+      await client.query(`DELETE FROM module WHERE course_id = $1`, [courseId]);
+      for (const m of modules) {
+        await client.query(
+          `INSERT INTO module (course_id, title, duration_minutes) VALUES ($1, $2, $3)`,
+          [courseId, m.title, m.duration_minutes]
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+    return course;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 module.exports = {
