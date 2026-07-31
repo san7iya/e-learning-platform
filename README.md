@@ -2,20 +2,42 @@
 
 > Full‑stack E‑Learning Platform (React + Vite frontend, Node.js + Express backend, PostgreSQL)
 
-A Coursera‑inspired project where users can register, log in, browse courses, and access a personalized dashboard with progress tracking.
+A Coursera‑inspired project where users can register, log in, browse courses, and access a role-specific dashboard — students track enrollment and progress, instructors manage the courses they teach, and org-admins oversee every course taught within their organization.
+
+---
+
+## Highlights
+
+- **99.6% query time reduction, measured not estimated.** Found a missing index on the join column behind every course listing, seeded 3,000 courses / ~21,000 modules to reproduce it at realistic scale, and benchmarked before/after with both `EXPLAIN ANALYZE` and real end-to-end service calls. See [Query Performance](#query-performance).
+- **RBAC as composable middleware, not scattered `if` checks.** Role checks (`requireRole`) and ownership checks (`requireOwnership`) are two independent, stackable Express middlewares — e.g. editing a course requires *both* being an instructor/org-admin *and* owning that specific course — enforced on the backend regardless of what the frontend shows.
+- **Three real role-based views, not one dashboard with hidden buttons.** Students, instructors, and org-admins each get a purpose-built `/dashboard` backed by role-scoped SQL (an org-admin's course list is a live join across every instructor in their organization) — not the same page with conditionally-rendered buttons.
+
+### Screenshots
+
+| Landing | Register (org-admin) |
+|---|---|
+| ![Landing page](docs/screenshots/1-landing.png) | ![Register page](docs/screenshots/2-register.png) |
+
+| Student dashboard | Browse courses |
+|---|---|
+| ![Student dashboard](docs/screenshots/3-dashboard.png) | ![Browse courses](docs/screenshots/4-browse.png) |
+
+| Course detail |
+|---|
+| ![Course detail](docs/screenshots/5-course-detail.png) |
 
 ---
 
 ## Features
 
-- **Authentication:** Register & login with email/password, passwords hashed with `bcrypt`, JWT issued on login/register and sent as a `Bearer` token. Input validation and rate limiting on auth routes.
-- **RBAC:** Role-gated course create/edit (`student` / `instructor` / `org-admin`), with role and ownership checked as two separate, composable middleware steps.
-- **Course Management:** Courses fetched from PostgreSQL with real category and lesson (module) counts; paginated; filterable by category.
-- **Enrollment & Progress:** Real enrollment records tied to each user, with per-course progress tracking (no more hardcoded values).
-- **User Dashboard:** Personalized welcome message, real in‑progress courses, category-matched recommendations, clickable category filters.
-- **Responsive Frontend:** Built with React + Vite, a shared `AuthContext`, and a consolidated auth-aware header.
+- **Authentication:** Register & login with email/password, passwords hashed with `bcrypt`, JWT issued on login/register and sent as a `Bearer` token. Input validation and rate limiting on auth routes. Self-serve registration for `student`, `instructor`, and `org-admin` — an org-admin registration creates a brand-new `organization` row on the spot, so nobody can self-register as admin of an org they don't run.
+- **Role-based dashboards:** `/dashboard` renders a different view per role — students see in-progress courses and recommendations with enroll actions; instructors see the courses they personally teach with enrollment counts and a create/edit CTA; org-admins see every course taught across their organization (read-only, with instructor attribution). Enrollment and progress-tracking UI/routes are hidden entirely from non-students, and the backend enforces the same boundary independently (`requireRole`) so it isn't just a UI restriction.
+- **RBAC:** Role- and ownership-gated course create/edit (`student` / `instructor` / `org-admin`), checked as two separate, composable middleware steps (`requireRole`, `requireOwnership`).
+- **Course Management:** Courses fetched from PostgreSQL with real category and lesson (module) counts; paginated; filterable by category. Instructors/org-admins can create and edit courses through dedicated forms; a course detail page shows full module listings.
+- **Enrollment & Progress:** Real enrollment records tied to each user, with per-course progress tracking and unenroll support (with a confirmation dialog warning that progress is lost).
+- **Redesigned Frontend:** A consistent visual system (shared design tokens, bold-border card style, Space Grotesk/Fraunces type) across the landing page, auth screens, header, and course cards, built with React + Vite, a shared `AuthContext`, and role-aware routing (`PrivateRoute`, `RoleRoute`).
 - **Backend API:** Express REST API split into routes/controllers/services layers, PostgreSQL (`pg`), CORS enabled, env-based config via `dotenv`.
-- **Tests:** backend (`jest`+`supertest`) covers auth (register/login happy + failure paths) and an RBAC-denied case; frontend (`vitest`+React Testing Library) covers `CourseCard`, `AuthContext`, and `PrivateRoute`.
+- **Tests:** backend (`jest`+`supertest`, 22 tests) covers auth (register/login happy + failure paths, org-admin registration), and RBAC across course creation, enrollment, and the role-scoped course-listing endpoints; frontend (`vitest`+React Testing Library, 14 tests) covers `CourseCard`, `AuthContext`, and `PrivateRoute`.
 - **Query Performance:** `module.course_id` — the join column used by every course-listing query — was missing an index; measured and fixed, see [Query Performance](#query-performance) below.
 
 ---
@@ -39,11 +61,19 @@ e-learning-platform/
 │   ├── .env.example
 │   └── package.json
 │
+├── docs/
+│   └── design/          # Static design reference (final visual direction mockup)
+│
 ├── src/
 │   ├── App.jsx
 │   ├── main.jsx
 │   ├── index.css
 │   ├── config.js        # API_BASE constant
+│   ├── styles/
+│   │   ├── tokens.css    # Shared design tokens (colors, borders, shadows, type)
+│   │   └── layout.css    # Shared layout primitives (.section, .grid, etc.)
+│   ├── utils/
+│   │   └── categoryColor.js
 │   ├── test/
 │   │   └── setup.js     # vitest + jest-dom setup
 │   ├── context/
@@ -51,14 +81,25 @@ e-learning-platform/
 │   │   └── AuthContext.test.jsx
 │   └── components/
 │       ├── landing/
-│       ├── auth/
+│       ├── auth/         # Login/register form + Toggle switcher
 │       ├── header/       # single shared, auth-aware Header
+│       ├── footer/
+│       ├── profile/      # Profile page (name/email/role)
+│       ├── shared/
+│       │   └── ConfirmDialog.jsx
 │       ├── courses/
-│       │   ├── CourseCard.jsx
-│       │   └── CourseCard.test.jsx
+│       │   ├── Dashboard.jsx        # Role-branching: Student/Instructor/OrgAdmin views
+│       │   ├── AllCourses.jsx       # Browse all courses (category filter, pagination)
+│       │   ├── CourseDetail.jsx     # Single course + modules + enroll/unenroll
+│       │   ├── CourseCard.jsx / .test.jsx
+│       │   ├── CourseForm.jsx       # Shared form used by Create/Edit
+│       │   ├── CreateCourse.jsx
+│       │   ├── EditCourse.jsx
+│       │   └── MyProgress.jsx       # Student-only progress tracker + unenroll
 │       └── routing/
-│           ├── PrivateRoute.jsx
-│           └── PrivateRoute.test.jsx
+│           ├── PrivateRoute.jsx     # Requires any authenticated user
+│           ├── PrivateRoute.test.jsx
+│           └── RoleRoute.jsx        # Requires one of a specific set of roles
 │
 ├── vite.config.js       # @vitejs/plugin-react + vitest config
 ├── package.json
@@ -69,13 +110,19 @@ e-learning-platform/
 
 ## Database Schema (PostgreSQL)
 
+### organization
+- `org_id` SERIAL PRIMARY KEY
+- `name` VARCHAR(100)
+- `location` VARCHAR(255)
+
 ### users
 - `user_id` SERIAL PRIMARY KEY
 - `name` VARCHAR(100)
 - `email` VARCHAR(100) UNIQUE
 - `password` TEXT
 - `join_date` TIMESTAMP
-- `role` VARCHAR(20) DEFAULT `'student'` — `student` / `instructor` / `org-admin` (self-serve at registration; `org-admin` is not self-servable)
+- `role` VARCHAR(20) DEFAULT `'student'` — `student` / `instructor` / `org-admin`, all self-serve at registration
+- `org_id` REFERENCES `organization` — set for org-admins (their own org) and, optionally, instructors; new courses inherit this onto the `instructor` row they create
 
 ### course
 - `course_id` SERIAL PRIMARY KEY
@@ -89,13 +136,8 @@ e-learning-platform/
 - `instructor_id` SERIAL PRIMARY KEY
 - `name` VARCHAR(100)
 - `bio` TEXT
-- `org_id` REFERENCES `organization`
+- `org_id` REFERENCES `organization` — inherited from the creating user's own `org_id`, if set
 - `user_id` UNIQUE REFERENCES `users` — links an instructor row to the login-capable user who owns it, for RBAC ownership checks
-
-### organization
-- `org_id` SERIAL PRIMARY KEY
-- `name` VARCHAR(100)
-- `location` VARCHAR(255)
 
 ### module
 - `module_id` SERIAL PRIMARY KEY
@@ -118,20 +160,25 @@ e-learning-platform/
 All protected routes expect `Authorization: Bearer <token>`, where `<token>` is the JWT returned by `/register` or `/login`.
 
 ### Authentication
-- `POST /register` — Register a new user. Body: `{ name, email, password, role? }` (`role` defaults to `student`; only `student`/`instructor` are self-servable). Returns `{ token, user }` — never the password hash.
+- `POST /register` — Register a new user. Body: `{ name, email, password, role? }` (`role` defaults to `student`). If `role` is `org-admin`, also requires `org_name` (`org_location` optional) — a new `organization` row is created and the admin is linked to it in the same transaction. Returns `{ token, user }` — never the password hash.
 - `POST /login` — Login. Returns `{ token, user }`.
 - `GET /me` — *(auth required)* Returns the current user's fresh profile (name/email/role) for the given token.
 
 ### Courses
 - `GET /courses` — Public. Query params: `category` (filter), `page`, `limit` (pagination, default `limit=10`, max `50`). Returns `{ courses, pagination: { page, limit, total, totalPages } }`, each course including a real `lessons_count` (from `module`).
+- `GET /categories` — Public. Distinct list of course categories, for the browse-page filter.
+- `GET /courses/:id` — Public. Full course detail including its modules.
 - `GET /recommended-courses` — *(auth required)* Courses the user isn't enrolled in yet, prioritizing categories they're already enrolled in, capped at 4.
+- `GET /my-taught-courses` — *(auth required, role: `instructor`)* Courses the logged-in instructor teaches, each with a live enrolled-student count.
+- `GET /org-courses` — *(auth required, role: `org-admin`)* Every course taught by instructors in the admin's own organization, with instructor name and enrolled-student count. Returns `[]` if the admin has no courses in their org yet.
 - `POST /courses` — *(auth required, role: `instructor`/`org-admin`)* Create a course. Body: `{ title, description?, duration_weeks?, category? }`.
 - `PATCH /courses/:id` — *(auth required, role: `instructor`/`org-admin`, and ownership: only the course's own instructor)* Update a course.
 
 ### Enrollment
-- `POST /enroll` — *(auth required)* Body: `{ course_id }`. `409` if already enrolled, `404` if the course doesn't exist.
+- `POST /enroll` — *(auth required, role: `student`)* Body: `{ course_id }`. `409` if already enrolled, `404` if the course doesn't exist. Instructors/org-admins get `403` — enrollment is a student-only action.
 - `GET /my-courses` — *(auth required)* The logged-in user's enrolled courses, joined with real progress.
 - `PATCH /enrollments/:id/progress` — *(auth required, ownership: only the enrollment's own user)* Body: `{ progress_percent }` (0–100).
+- `DELETE /enrollments/:id` — *(auth required, ownership: only the enrollment's own user)* Unenroll from a course, deleting the progress record.
 
 ---
 
@@ -152,7 +199,7 @@ psql -U postgres -h localhost -d elearning -f db/seed.sql
 node index.js
 ```
 
-`db/schema.sql` is the current schema for fresh installs. `db/migrations/` holds the incremental changes made along the way (role column, instructor↔user link, category column, indexes, enrollment uniqueness) — only relevant if you're upgrading an existing database instead of creating a fresh one.
+`db/schema.sql` is the current schema for fresh installs. `db/migrations/` holds the incremental changes made along the way (role column, instructor↔user link, category column, indexes, enrollment uniqueness, `users.org_id`) — only relevant if you're upgrading an existing database instead of creating a fresh one.
 
 By default the backend runs at: `http://localhost:5000`
 
@@ -163,7 +210,7 @@ cd backend
 npm test
 ```
 
-Runs `jest` + `supertest` against the real local database configured in `.env` (register/login happy + failure paths, one RBAC-denied case). Safe to re-run — each run generates unique test emails.
+Runs `jest` + `supertest` (22 tests) against the real local database configured in `.env` — auth happy/failure paths, org-admin registration, and RBAC across course creation, enrollment, and the role-scoped `/my-taught-courses` and `/org-courses` endpoints. Safe to re-run — each run generates unique test emails.
 
 ---
 
@@ -206,23 +253,37 @@ npm run dev
 
 Default frontend URL: `http://localhost:5173`
 
+### Pages
+
+
+| Route | Access | Purpose |
+|---|---|---|
+| `/` | Public | Landing page |
+| `/login`, `/register` | Public | Auth (register supports `student`/`instructor`/`org-admin`, with org name/location fields for org-admin) |
+| `/dashboard` | Any authenticated user | Role-specific view (student / instructor / org-admin) |
+| `/courses` | Public | Browse all courses, filterable by category |
+| `/courses/:id` | Public | Course detail, modules, enroll/unenroll (students) |
+| `/courses/new`, `/courses/:id/edit` | `instructor` / `org-admin` | Create / edit a course |
+| `/progress` | `student` only | Enrolled courses, progress sliders, unenroll |
+| `/profile` | Any authenticated user | Name, email, role |
+
 ### Running tests
 
 ```powershell
 npm test
 ```
 
-Runs `vitest` (React Testing Library) over `src/**/*.test.jsx` — `CourseCard` rendering/interaction, `AuthContext` login/logout/session-validation, and `PrivateRoute` redirect behavior. Fully isolated from the network (`fetch` is mocked), so no backend or database needed.
+Runs `vitest` (React Testing Library, 14 tests) over `src/**/*.test.jsx` — `CourseCard` rendering/interaction (including instructor-only enrolled-count and edit-link states), `AuthContext` login/logout/session-validation, and `PrivateRoute` redirect behavior. Fully isolated from the network (`fetch` is mocked), so no backend or database needed.
 
 ---
 
 ## Authentication Flow
 
-1. User registers or logs in → password hashed/verified with `bcrypt`.
+1. User registers or logs in → password hashed/verified with `bcrypt`. Registering as `org-admin` also creates a new `organization` row in the same transaction, linked via the new user's `org_id`.
 2. On success, the backend signs a JWT containing only `{ user_id, role }` and returns it alongside a `user` object that never includes the password hash.
 3. The frontend's `AuthContext` stores the token (and user) in `localStorage`, sends it as `Authorization: Bearer <token>` on subsequent requests, and validates it against `GET /me` once on load.
-4. `<PrivateRoute>` (React Router) gates `/dashboard` — no authenticated user means an immediate redirect to `/login`, no imperative page reload.
-5. Protected backend routes use `requireAuth` (verifies the JWT, sets `req.user`), and mutating course/enrollment routes add `requireRole`/`requireOwnership` on top, checked as separate, composable steps.
+4. `<PrivateRoute>` gates routes behind "any authenticated user" (e.g. `/dashboard`, `/profile`); `<RoleRoute roles={[...]}>` gates routes behind a specific role set (e.g. `/progress` → `student` only, `/courses/new` → `instructor`/`org-admin`) — both redirect immediately rather than flashing the protected content.
+5. Protected backend routes use `requireAuth` (verifies the JWT, sets `req.user`), and role-sensitive routes add `requireRole`/`requireOwnership` on top, checked as separate, composable steps — enforced independently of whatever the frontend shows, so a role restriction is never just a UI-level suggestion.
 
 ---
 
