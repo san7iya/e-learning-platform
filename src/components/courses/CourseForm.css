@@ -1,0 +1,50 @@
+.course-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 480px;
+}
+
+.course-form .input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.course-form .input-group label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.course-form .input-group input,
+.course-form .input-group textarea {
+  border: 2px solid var(--ink);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.course-form .input-group input {
+  height: 46px;
+}
+
+.course-form .input-group input:focus,
+.course-form .input-group textarea:focus {
+  box-shadow: var(--shadow-sm);
+}
+
+.course-form .course-form-submit {
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.course-form .course-form-submit:disabled {
+  cursor: default;
+  opacity: 0.7;
+}

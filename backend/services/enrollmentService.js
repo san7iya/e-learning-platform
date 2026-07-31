@@ -47,4 +47,12 @@ async function updateProgress(enrollmentId, progressPercent) {
   return result.rows[0] || null;
 }
 
-module.exports = { enrollUserInCourse, getMyCourses, getEnrollmentOwnerUserId, updateProgress };
+async function unenroll(enrollmentId) {
+  const result = await pool.query(
+    "DELETE FROM enrollment WHERE enrollment_id = $1 RETURNING enrollment_id",
+    [enrollmentId]
+  );
+  return result.rows[0] || null;
+}
+
+module.exports = { enrollUserInCourse, getMyCourses, getEnrollmentOwnerUserId, updateProgress, unenroll };

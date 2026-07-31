@@ -1,0 +1,45 @@
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  border: var(--border);
+  box-shadow: var(--shadow);
+  background: #fff;
+  padding: 32px;
+  max-width: 480px;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--moss);
+  border: 2px solid var(--ink);
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-details h3 {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.profile-email {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+
+.profile-role {
+  background: var(--moss);
+}

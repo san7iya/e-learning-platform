@@ -1,0 +1,119 @@
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  background: #fff;
+  padding: 20px;
+}
+
+.progress-row-info .tag {
+  margin-bottom: 8px;
+}
+
+.progress-row-info h3 {
+  margin: 0 0 4px;
+}
+
+.progress-row-info h3 a {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.progress-row-info h3 a:hover {
+  color: var(--moss);
+}
+
+.progress-row-info .meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.unenroll-link {
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--coral);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.unenroll-link:hover {
+  color: var(--ink);
+}
+
+.progress-row-error {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--coral);
+  margin-top: 6px;
+}
+
+.progress-row-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-row-control input[type="range"] {
+  width: 160px;
+  accent-color: var(--moss);
+}
+
+.progress-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  min-width: 40px;
+}
+
+.save-btn {
+  background: var(--moss);
+  color: #fff;
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 9px 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.save-btn:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.save-btn:disabled {
+  background: var(--ink-soft);
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .progress-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

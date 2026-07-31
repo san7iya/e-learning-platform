@@ -55,4 +55,18 @@ async function updateProgress(req, res) {
   }
 }
 
-module.exports = { enroll, getMyCourses, updateProgress };
+async function unenroll(req, res) {
+  try {
+    const enrollment = await enrollmentService.unenroll(req.params.id);
+
+    if (!enrollment) {
+      return res.status(404).json({ success: false, message: "Enrollment not found" });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    handleServerError(res, err, "Could not unenroll from course");
+  }
+}
+
+module.exports = { enroll, getMyCourses, updateProgress, unenroll };

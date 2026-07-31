@@ -6,58 +6,55 @@ import { API_BASE } from '../../config';
 export default function CoursesSection() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const didFetch = useRef(false); // guard for StrictMode
 
   useEffect(() => {
     if (didFetch.current) return;
     didFetch.current = true;
 
-    fetch(`${API_BASE}/courses`, { cache: "no-store" }) // avoid 304 issues
-      .then(async (res) => {
-        // Handle 304 explicitly in dev
-        if (res.status === 304) {
-          // Try re-fetch with no-cache
-          return fetch(`${API_BASE}/courses`, {
-            cache: "no-store",
-            headers: { "Cache-Control": "no-cache" }
-          }).then(r => r.json());
-        }
-        return res.json();
-      })
+    fetch(`${API_BASE}/courses?limit=6`)
+      .then(res => res.json())
       .then(data => {
         if (data?.success) {
           const formatted = data.courses.map(c => ({
             id: c.course_id,
             title: c.title,
-            author: c.instructor || "Unknown",
-            progress: 0,
-            lessonsDone: 0,
+            author: c.instructor,
             totalLessons: c.lessons_count,
+            durationWeeks: c.duration_weeks,
             category: c.category || "Uncategorized"
           }));
           setCourses(formatted);
+        } else {
+          setLoadError(true);
         }
       })
-      .catch(err => console.log("Fetch error:", err))
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div className="courses-section">
-      <div className="section-header">
-        <h2 className="section-title">Top Listed Courses</h2>
-        <Link to="/courses" className="see-all-link">See all →</Link>
+    <div className="section">
+      <div className="section-head">
+        <h2>Explore courses</h2>
+        <Link to="/courses" className="see-all">browse all &rarr;</Link>
       </div>
 
-      <div className="courses-grid">
-        {loading ? (
-          <p style={{ textAlign: "center" }}>Loading courses...</p>
-        ) : courses.length > 0 ? (
-          courses.slice(0,6).map(course => <CourseCard key={course.id} {...course} />)
-        ) : (
-          <p style={{ textAlign: "center" }}>No courses available</p>
-        )}
-      </div>
+      {loading ? (
+        <p className="section-empty">Loading courses...</p>
+      ) : loadError ? (
+        <div className="empty-box">
+          <h3>Couldn't load courses</h3>
+          <p>Check your connection and try again.</p>
+        </div>
+      ) : courses.length > 0 ? (
+        <div className="grid">
+          {courses.map(course => <CourseCard key={course.id} {...course} />)}
+        </div>
+      ) : (
+        <p className="section-empty">No courses available yet — check back soon.</p>
+      )}
     </div>
   );
 }

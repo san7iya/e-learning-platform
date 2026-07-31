@@ -1,62 +1,44 @@
-import React from 'react';
-import { Play, BookOpen, Award } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { API_BASE } from '../../config';
+import { getCategoryColor } from '../../utils/categoryColor';
 
 export default function HeroSection() {
+  const [featured, setFeatured] = useState([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/courses?limit=2`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setFeatured(data.courses);
+      })
+      .catch(err => console.log("Fetch error:", err));
+  }, []);
+
   return (
-    <div className="hero-section">
-      <div className="hero-container">
-        <div className="hero-grid">
-          <div className="hero-content">
-            <h1 className="hero-title">
-              Studying Online is now much easier
-            </h1>
-            <p className="hero-subtitle">
-              Brainy is an interesting platform that will teach you in more an interactive way
-            </p>
-            <div className="hero-buttons">
-              <button className="btn-primary">Join for free</button>
-              <button className="btn-secondary">
-                <Play size={20} />
-                <span>Watch how it works</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="stats-section">
-            <div className="stat-card stat-card-1">
-              <div className="stat-icon stat-icon-purple">
-                <BookOpen size={24} />
-              </div>
-              <div>
-                <p className="stat-number">250k</p>
-                <p className="stat-label">Assisted Students</p>
-              </div>
-            </div>
-            
-            <div className="stat-card stat-card-2">
-              <div className="stat-icon stat-icon-pink">
-                <Award size={20} />
-              </div>
-              <div>
-                <p className="stat-title">Congratulations</p>
-                <p className="stat-subtitle">Your admission completed</p>
-              </div>
-            </div>
-
-            <div className="stat-card stat-card-3">
-              <div className="stat-avatar"></div>
-              <div>
-                <p className="stat-title">User Experience Class</p>
-                <p className="stat-subtitle">Today at 12.00 PM</p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="hero">
+      <div>
+        <div className="sticker">✎&nbsp;no fluff, just progress</div>
+        <h1>Learn at the pace of <mark>your actual week.</mark></h1>
+        <p className="sub">
+          Track what you've finished, pick up exactly where you stopped, and
+          never lose your place between one course and the next.
+        </p>
+        <Link to="/courses" className="btn-primary">Browse courses &rarr;</Link>
       </div>
-      <div className="wave-divider">
-        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 120L1440 120L1440 0C1440 0 1080 100 720 100C360 100 0 0 0 0L0 120Z" fill="white"/>
-        </svg>
+
+      <div className="stack">
+        {featured.map((course, i) => (
+          <Link key={course.course_id} to={`/courses/${course.course_id}`} className={`hcard c${i + 1}`}>
+            <span className="tag" style={{ background: getCategoryColor(course.category) }}>
+              {course.category || "Uncategorized"}
+            </span>
+            <h3>{course.title}</h3>
+            <div className="meta">
+              {course.lessons_count} lesson{course.lessons_count === 1 ? "" : "s"} &middot; {course.duration_weeks} wk
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

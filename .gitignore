@@ -7,3 +7,4 @@ dist/
 *.log
 .claude/
 GAPS_CHECKLIST.md
+frontend-redesign-implementation-prompt.md

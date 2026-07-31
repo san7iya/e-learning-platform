@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Final Direction — 1B Hero + Simple Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F1E4; --ink:#15181F; --ink-soft:#5B6472;
+    --moss:#2F8F4E; --highlighter:#FFD23F; --coral:#FF6B4A; --sky:#5FB4D9;
+    --border: 2.5px solid var(--ink);
+    --shadow: 5px 5px 0 var(--ink);
+    --shadow-sm: 3px 3px 0 var(--ink);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 32px;}
+
+  nav{display:flex; justify-content:space-between; align-items:center; padding:20px 32px; border-bottom:var(--border);}
+  .mark{font-family:'Fraunces', serif; font-weight:700; font-size:20px;}
+  .navlinks{display:flex; gap:26px; font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:14px;}
+  .navlinks a{color:var(--ink); text-decoration:none;}
+  .navlinks a.active{border-bottom:2.5px solid var(--moss); color:var(--moss);}
+  .avatar{width:36px; height:36px; border-radius:50%; background:var(--moss); border:2px solid var(--ink);}
+
+  /* 1B hero, restored */
+  .hero{
+    display:grid; grid-template-columns:1.05fr 0.95fr; gap:50px;
+    padding:64px 32px 56px; max-width:1080px; margin:0 auto; align-items:center;
+  }
+  .sticker{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:12px;
+    background:var(--sky); border:2.5px solid var(--ink); box-shadow:var(--shadow-sm);
+    padding:6px 12px; transform:rotate(-3deg); margin-bottom:20px; color:#fff;
+  }
+  h1{font-family:'Fraunces', serif; font-weight:700; font-size:46px; line-height:1.05; letter-spacing:-0.015em; margin-bottom:16px;}
+  h1 mark{
+    background:var(--highlighter); padding:0 8px; border:2.5px solid var(--ink);
+    box-shadow:var(--shadow-sm); font-style:normal; display:inline-block; transform:rotate(-1deg);
+  }
+  .sub{font-size:16px; color:var(--ink-soft); max-width:420px; margin-bottom:24px; line-height:1.5;}
+  .btn-primary{
+    background:var(--moss); color:#fff; padding:13px 24px; border:var(--border);
+    box-shadow:var(--shadow); font-family:'Space Grotesk', sans-serif; font-weight:700;
+    font-size:15px; text-decoration:none; display:inline-block; transition: transform .1s ease, box-shadow .1s ease;
+  }
+  .btn-primary:hover{transform:translate(3px,3px); box-shadow:2px 2px 0 var(--ink);}
+
+  .stack{position:relative; height:300px;}
+  .hcard{position:absolute; width:270px; background:#fff; border:var(--border); box-shadow:var(--shadow); padding:20px;}
+  .hcard.c1{top:0; left:44px; transform:rotate(-3deg); z-index:1;}
+  .hcard.c2{top:60px; left:0; transform:rotate(2deg); z-index:2; background:#FBF6E8;}
+  .tag{display:inline-block; font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:11px; padding:4px 10px; border:2px solid var(--ink); margin-bottom:10px; color:#fff;}
+  .hcard h3{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:17px; margin-bottom:5px;}
+  .hcard .meta{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); margin-bottom:10px;}
+  .track-sm{height:11px; border:2px solid var(--ink); background:#fff;}
+  .track-sm .fill{height:100%; background:var(--highlighter);}
+
+  /* simple dashboard structure, tag colors restored */
+  .section{max-width:1080px; margin:0 auto; padding:16px 32px 56px;}
+  .section-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:22px;}
+  .section-head h2{font-family:'Fraunces', serif; font-weight:700; font-size:22px;}
+  .section-head .see-all{font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13px; color:var(--moss); text-decoration:none; border-bottom:2px solid var(--moss);}
+
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:22px;}
+  .ccard{background:#fff; border:var(--border); box-shadow:var(--shadow); padding:20px; transition:transform .12s ease, box-shadow .12s ease;}
+  .ccard:hover{transform:translate(-2px,-2px); box-shadow:7px 7px 0 var(--ink);}
+  .ccard h3{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:17px; margin-bottom:5px; margin-top:10px;}
+  .meta{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft); margin-bottom:14px;}
+  .track{height:12px; border:2px solid var(--ink); background:#fff; position:relative;}
+  .track .fill{position:absolute; left:0; top:0; height:100%; background:var(--highlighter);}
+  .pct{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:12px; margin-top:6px; display:block;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="mark">coursework.</div>
+  <div class="navlinks"><a href="#" class="active">Dashboard</a><a href="#">Browse</a><a href="#">Progress</a></div>
+  <div class="avatar"></div>
+</nav>
+
+<div class="hero">
+  <div>
+    <div class="sticker">✎&nbsp;no fluff, just progress</div>
+    <h1>Learn at the pace of <mark>your actual week.</mark></h1>
+    <p class="sub">Track what you've finished, pick up exactly where you stopped, and never lose your place between one course and the next.</p>
+    <a href="#" class="btn-primary">Browse courses →</a>
+  </div>
+  <div class="stack">
+    <div class="hcard c1">
+      <span class="tag" style="background:var(--moss);">Data Structures</span>
+      <h3>Trees & Graphs</h3>
+      <div class="meta">Module 5 of 8 · 63%</div>
+      <div class="track-sm"><div class="fill" style="width:63%"></div></div>
+    </div>
+    <div class="hcard c2">
+      <span class="tag" style="background:var(--coral);">Systems</span>
+      <h3>Databases & Indexing</h3>
+      <div class="meta">Module 2 of 6 · 30%</div>
+      <div class="track-sm"><div class="fill" style="width:30%"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-head"><h2>Continue learning</h2><a href="#" class="see-all">browse all →</a></div>
+  <div class="grid">
+    <div class="ccard">
+      <span class="tag" style="background:var(--moss);">Data Structures</span>
+      <h3>Trees & Graphs</h3>
+      <div class="meta">Module 5 of 8</div>
+      <div class="track"><div class="fill" style="width:63%"></div></div>
+      <span class="pct">63% complete</span>
+    </div>
+    <div class="ccard">
+      <span class="tag" style="background:var(--coral);">Systems</span>
+      <h3>Databases & Indexing</h3>
+      <div class="meta">Module 2 of 6</div>
+      <div class="track"><div class="fill" style="width:30%"></div></div>
+      <span class="pct">30% complete</span>
+    </div>
+    <div class="ccard">
+      <span class="tag" style="background:var(--sky);">Web Dev</span>
+      <h3>Building REST APIs</h3>
+      <div class="meta">Module 4 of 7</div>
+      <div class="track"><div class="fill" style="width:48%"></div></div>
+      <span class="pct">48% complete</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

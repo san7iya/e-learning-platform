@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CourseCard from "./CourseCard";
 import Header from "../header/Header";
-import Footer from "../landing/footer";
+import Footer from "../footer/Footer";
+import "./AllCourses.css";
 import { API_BASE } from "../../config";
 import { useAuth } from "../../context/AuthContext";
 
-const CATEGORIES = ["Design", "Development", "Data", "Finance", "Business"];
 const PAGE_SIZE = 6;
 
 export default function AllCourses() {
@@ -16,15 +16,29 @@ export default function AllCourses() {
   const category = searchParams.get("category") || "";
   const page = Math.max(1, parseInt(searchParams.get("page"), 10) || 1);
   const [courses, setCourses] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [enrolledIds, setEnrolledIds] = useState(new Set());
+  const canEnroll = !user || user.role === "student";
+
+  useEffect(() => {
+    fetch(`${API_BASE}/categories`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setCategories(data.categories);
+      })
+      .catch(err => console.log("Fetch error:", err));
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams({ page, limit: PAGE_SIZE });
     if (category) params.set("category", category);
 
     setLoading(true);
+    setLoadError(false);
     fetch(`${API_BASE}/courses?${params}`)
       .then(res => res.json())
       .then(data => {
@@ -33,21 +47,22 @@ export default function AllCourses() {
             id: c.course_id,
             title: c.title,
             author: c.instructor,
-            progress: 0,
-            lessonsDone: 0,
             totalLessons: c.lessons_count,
+            durationWeeks: c.duration_weeks,
             category: c.category || "Uncategorized"
           }));
           setCourses(formatted);
           setTotalPages(data.pagination?.totalPages || 1);
+        } else {
+          setLoadError(true);
         }
       })
-      .catch(err => console.log("Fetch error:", err))
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, [category, page]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !canEnroll) return;
 
     fetch(`${API_BASE}/my-courses`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -59,13 +74,15 @@ export default function AllCourses() {
         }
       })
       .catch(err => console.log("Fetch error:", err));
-  }, [token]);
+  }, [token, canEnroll]);
 
   const handleEnroll = async (courseId) => {
     if (!user) {
       navigate("/login");
       return;
     }
+
+    setActionError("");
 
     try {
       const response = await fetch(`${API_BASE}/enroll`, {
@@ -82,10 +99,10 @@ export default function AllCourses() {
       if (data.success || response.status === 409) {
         setEnrolledIds(prev => new Set(prev).add(courseId));
       } else {
-        alert(data.message || "Could not enroll in course");
+        setActionError(data.message || "Could not enroll in course. Please try again.");
       }
     } catch (err) {
-      alert("Could not enroll in course");
+      setActionError("Couldn't reach the server — check your connection and try again.");
     }
   };
 
@@ -104,90 +121,79 @@ export default function AllCourses() {
 
   return (
     <>
+      <Header />
 
-        < Header />
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "60px 32px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px", flexWrap: "wrap", gap: "16px" }}>
-          <h2 style={{ fontSize: "32px", fontWeight: "700" }}>
-              All Courses
-          </h2>
+      <div className="section">
+        <div className="section-head">
+          <h2>All courses</h2>
 
           <select
+            className="category-filter"
             value={category}
             onChange={handleCategoryChange}
-            style={{
-              padding: "10px 16px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              fontSize: "14px"
-            }}
           >
-            <option value="">All Categories</option>
-            {CATEGORIES.map(c => (
+            <option value="">All categories</option>
+            {categories.map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
 
-        <div style={{
-            display: "grid",
-            gap: "1.5rem",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))"
-        }}>
-            {loading ? (
-            <p style={{ textAlign: "center" }}>Loading courses...</p>
-            ) : courses.length > 0 ? (
-            courses.map(course => (
+        {actionError && <p className="error-banner">{actionError}</p>}
+
+        {loading ? (
+          <p className="section-empty">Loading courses...</p>
+        ) : loadError ? (
+          <div className="empty-box">
+            <h3>Couldn't load courses</h3>
+            <p>Check your connection and try again.</p>
+          </div>
+        ) : courses.length > 0 ? (
+          <div className="grid">
+            {courses.map(course => (
               <CourseCard
                 key={course.id}
                 {...course}
                 enrolled={enrolledIds.has(course.id)}
-                onEnroll={() => handleEnroll(course.id)}
+                onEnroll={canEnroll ? () => handleEnroll(course.id) : undefined}
               />
-            ))
-            ) : (
-            <p style={{ textAlign: "center" }}>No courses found.</p>
-            )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-box">
+            <h3>No courses found</h3>
+            <p>
+              {category
+                ? `Nothing in "${category}" right now — try a different category.`
+                : "There aren't any courses yet — check back soon."}
+            </p>
+          </div>
+        )}
 
         {!loading && courses.length > 0 && (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "40px" }}>
+          <div className="pagination">
             <button
+              className="page-btn"
               onClick={() => goToPage(page - 1)}
               disabled={page <= 1}
-              style={{
-                padding: "8px 20px",
-                borderRadius: "8px",
-                border: "1px solid #6c3ba1",
-                background: page <= 1 ? "#eee" : "#fff",
-                color: "#6c3ba1",
-                cursor: page <= 1 ? "default" : "pointer"
-              }}
             >
               Previous
             </button>
 
-            <span>Page {page} of {totalPages}</span>
+            <span className="page-status">Page {page} of {totalPages}</span>
 
             <button
+              className="page-btn"
               onClick={() => goToPage(page + 1)}
               disabled={page >= totalPages}
-              style={{
-                padding: "8px 20px",
-                borderRadius: "8px",
-                border: "1px solid #6c3ba1",
-                background: page >= totalPages ? "#eee" : "#fff",
-                color: "#6c3ba1",
-                cursor: page >= totalPages ? "default" : "pointer"
-              }}
             >
               Next
             </button>
           </div>
         )}
-        </div>
+      </div>
 
-        <Footer />
+      <Footer />
     </>
   );
 }

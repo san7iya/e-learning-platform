@@ -2,8 +2,7 @@ import React from "react";
 import Header from "../header/Header";
 import HeroSection from "./hero";
 import CoursesSection from "./coursessection";
-import TestimonialsSection from "./testimonials";
-import Footer from "./footer";
+import Footer from "../footer/Footer";
 import "./LandingPage.css";
 
 export default function LandingPage() {
@@ -12,7 +11,6 @@ export default function LandingPage() {
       <Header />
       <HeroSection />
       <CoursesSection />
-      <TestimonialsSection />
       <Footer />
     </div>
   );

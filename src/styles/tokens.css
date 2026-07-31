@@ -1,0 +1,13 @@
+:root {
+  --paper: #F6F1E4;
+  --ink: #15181F;
+  --ink-soft: #5B6472;
+  --moss: #2F8F4E;
+  --highlighter: #FFD23F;
+  --coral: #FF6B4A;
+  --sky: #5FB4D9;
+
+  --border: 2.5px solid var(--ink);
+  --shadow: 5px 5px 0 var(--ink);
+  --shadow-sm: 3px 3px 0 var(--ink);
+}
