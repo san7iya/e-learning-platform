@@ -7,11 +7,14 @@ export default function CoursesSection() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [slowLoad, setSlowLoad] = useState(false);
   const didFetch = useRef(false); // guard for StrictMode
 
   useEffect(() => {
     if (didFetch.current) return;
     didFetch.current = true;
+
+    const slowTimer = setTimeout(() => setSlowLoad(true), 4000);
 
     fetch(`${API_BASE}/courses?limit=6`)
       .then(res => res.json())
@@ -31,7 +34,12 @@ export default function CoursesSection() {
         }
       })
       .catch(() => setLoadError(true))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        clearTimeout(slowTimer);
+        setLoading(false);
+      });
+
+    return () => clearTimeout(slowTimer);
   }, []);
 
   return (
@@ -42,7 +50,12 @@ export default function CoursesSection() {
       </div>
 
       {loading ? (
-        <p className="section-empty">Loading courses...</p>
+        <p className="section-empty">
+          Loading courses...
+          {slowLoad && (
+            <><br />Waking up the server — first load after a period of inactivity can take up to 30s.</>
+          )}
+        </p>
       ) : loadError ? (
         <div className="empty-box">
           <h3>Couldn't load courses</h3>
